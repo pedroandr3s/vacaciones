@@ -40,7 +40,7 @@ type FormData = {
   hireDate: string
   position: string
   contractType: "chile" | "contractor_extranjero"
-  initialBalance: number
+  initialBalance: string
 }
 
 const initialFormData: FormData = {
@@ -51,7 +51,7 @@ const initialFormData: FormData = {
   hireDate: "",
   position: "",
   contractType: "chile",
-  initialBalance: 0,
+  initialBalance: "",
 }
 
 interface AddCollaboratorDialogProps {
@@ -167,7 +167,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           startDate: formData.hireDate,
           status: "activo",
           position: formData.position,
-          initialBalance: formData.initialBalance,
+          initialBalance: formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : undefined,
           createdAt: now,
           updatedAt: now,
         }
@@ -175,9 +175,10 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
 
         // Create or update balance
         const isContractor = formData.contractType === "contractor_extranjero"
-        const hasManualBalance = formData.initialBalance > 0
+        const parsedBalance = formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : null
+        const hasManualBalance = parsedBalance !== null && !isNaN(parsedBalance)
         const legalDays = hasManualBalance
-          ? formData.initialBalance
+          ? parsedBalance
           : isContractor
             ? 15
             : calculateAccruedLegalDays(formData.hireDate, "chile")
@@ -269,7 +270,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           startDate: formData.hireDate,
           status: "activo",
           position: formData.position,
-          initialBalance: formData.initialBalance,
+          initialBalance: formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : undefined,
           createdAt: now,
           updatedAt: now,
         }
@@ -277,9 +278,10 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
 
         // 4. Create balance
         const isContractor = formData.contractType === "contractor_extranjero"
-        const hasManualBalance = formData.initialBalance > 0
+        const parsedBalance = formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : null
+        const hasManualBalance = parsedBalance !== null && !isNaN(parsedBalance)
         const legalDays = hasManualBalance
-          ? formData.initialBalance
+          ? parsedBalance
           : isContractor
             ? 15
             : calculateAccruedLegalDays(formData.hireDate, "chile")
@@ -345,6 +347,8 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
     setExistingCollaborator(null)
     setShowRehirePrompt(false)
     setIsCreatingRehire(false)
+    setSubmitError("")
+    setSheetWarning("")
     setOpen(false)
   }
 
@@ -361,7 +365,15 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => (isOpen ? setOpen(true) : handleClose())}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+        if (isOpen) {
+          setSubmitError("")
+          setSheetWarning("")
+          setOpen(true)
+        } else {
+          handleClose()
+        }
+      }}>
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="h-4 w-4 mr-2" />
@@ -518,11 +530,10 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
               <Input
                 id="initialBalance"
                 type="number"
-                min="0"
                 step="0.5"
                 value={formData.initialBalance}
-                onChange={(e) => handleInputChange("initialBalance", parseFloat(e.target.value) || 0)}
-                placeholder="0"
+                onChange={(e) => handleInputChange("initialBalance", e.target.value)}
+                placeholder="Auto-calcular"
               />
             </div>
           </div>
