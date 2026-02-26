@@ -32,6 +32,7 @@ import {
   firebaseDeleteHoliday as fsDeleteHoliday,
   createContract as fsCreateContract,
   updateContract as fsUpdateContract,
+  deleteEmployeeData as fsDeleteEmployeeData,
 } from "@/lib/firebase-services"
 import { useAuth } from "@/lib/auth"
 
@@ -48,6 +49,7 @@ interface DataContextType {
   // Employee mutations
   addEmployee: (emp: Employee) => Promise<void>
   updateEmployee: (id: string, updates: Partial<Employee>) => Promise<void>
+  deleteEmployee: (id: string, email: string) => Promise<void>
 
   // Balance mutations
   addBalance: (bal: VacationBalance) => Promise<void>
@@ -138,6 +140,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
     []
   )
 
+  const deleteEmployee = useCallback(async (id: string, email: string) => {
+    // 1. Delete from Firebase Auth via API route
+    const authRes = await fetch("/api/delete-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    })
+    const authResult = await authRes.json()
+    if (!authResult.success) {
+      throw new Error(authResult.error || "Error eliminando usuario de Auth")
+    }
+
+    // 2. Delete all Firestore data
+    await fsDeleteEmployeeData(id)
+
+    // 3. Update local state
+    setEmployees((prev) => prev.filter((e) => e.id !== id))
+    setBalances((prev) => prev.filter((b) => b.employeeId !== id))
+    setRequests((prev) => prev.filter((r) => r.employeeId !== id))
+    setContracts((prev) => prev.filter((c) => c.collaboratorId !== id))
+  }, [])
+
   // ---- Balance mutations ----
 
   const addBalance = useCallback(async (bal: VacationBalance) => {
@@ -223,6 +247,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         error,
         addEmployee,
         updateEmployee,
+        deleteEmployee,
         addBalance,
         updateBalance,
         addRequest,

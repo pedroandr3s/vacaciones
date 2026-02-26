@@ -354,10 +354,10 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
 
   const isFormValid =
     formData.fullName.trim() !== "" &&
-    formData.rut.length >= idMinLength &&
     formData.email.trim() !== "" &&
     formData.hireDate !== "" &&
-    formData.position.trim() !== "" &&
+    formData.initialBalance.trim() !== "" &&
+    !isNaN(parseFloat(formData.initialBalance)) &&
     (!existingCollaborator || existingCollaborator.status === "inactivo")
 
   const handleRutChange = (value: string) => {
@@ -464,7 +464,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           {/* Row 2: RUT/DNI + Fecha de nacimiento */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="rut">{idLabel} *</Label>
+              <Label htmlFor="rut">{idLabel}</Label>
               <Input
                 id="rut"
                 value={formData.rut}
@@ -503,7 +503,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Cargo *</Label>
+              <Label htmlFor="position">Cargo</Label>
               <Input
                 id="position"
                 value={formData.position}
@@ -526,14 +526,14 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="initialBalance">Saldo Inicial de Vacaciones</Label>
+              <Label htmlFor="initialBalance">Saldo Inicial de Vacaciones *</Label>
               <Input
                 id="initialBalance"
                 type="number"
                 step="0.5"
                 value={formData.initialBalance}
                 onChange={(e) => handleInputChange("initialBalance", e.target.value)}
-                placeholder="Auto-calcular"
+                placeholder="Ej: 15"
               />
             </div>
           </div>

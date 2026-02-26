@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef } from "react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { EmployeeWithBalance, ContractFile } from "@/lib/types"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Lock, AlertTriangle, FileText, Power, Briefcase, History, CalendarPlus, Clock, Info, User, Cake, Pencil, X, Check, Loader2, CalendarOff, RefreshCw, CheckCircle2, Upload, Download, Trash2, Paperclip } from "lucide-react"
+import { Calendar, Lock, AlertTriangle, FileText, Power, Briefcase, History, CalendarPlus, Clock, Info, User, Cake, Pencil, X, Check, Loader2, CalendarOff, RefreshCw, CheckCircle2, Upload, Download, Trash2, Paperclip, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useData } from "@/contexts/data-context"
@@ -189,7 +190,13 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
     ? Math.max(0, Math.ceil((contractorCycle.nextRenewalDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30)))
     : getMonthsUntilNaitusExpires()
 
-  const availableLegalDays = balance ? balance.legalDays - balance.usedDays : 0
+  // Display directo desde la DB:
+  // - usedDays solo cuenta consumo de dias legales
+  // - naitusDays ya esta decrementado cuando se consumen naitus
+  // - debtDays es negativo cuando hay deuda
+  const availableLegalDays = (balance?.legalDays || 0) - (balance?.usedDays || 0)
+  const displayNaitusDays = effectiveNaitusDays // respeta unlock/expired
+
   const totalAvailable = balance
     ? getTotalAvailable(balance.legalDays, balance.naitusDays, balance.usedDays, balance.debtDays, contractType as "chile" | "contractor_extranjero")
     : 0
@@ -403,36 +410,59 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                 </Badge>
               </div>
 
-              {/* Alerta informativa sobre acumulación */}
-              <Alert className={`mb-4 ${isContractor ? "bg-purple-50 border-purple-200" : "bg-blue-50 border-blue-200"}`}>
-                <Info className={`h-4 w-4 ${isContractor ? "text-purple-600" : "text-blue-600"}`} />
-                <AlertDescription className={`text-xs ${isContractor ? "text-purple-700" : "text-blue-700"}`}>
-                  {isContractor ? (
-                    <>
-                      <strong>Contractor en el extranjero:</strong> Los 15 dias legales y 5 dias Naitus se activan al cumplir 1 ano desde el inicio del contrato.
-                      <br />
-                      <strong>Dias Naitus:</strong> Siempre disponibles sin condiciones. El sistema descuenta primero los dias legales y solo cuando se agotan, descuenta de los Naitus.
-                      <br />
-                      <strong>Renovacion:</strong> Al completar cada ciclo anual, los dias se renuevan (no se acumulan).
-                      {contractorCycle && (
+              {/* Alerta informativa sobre acumulación - colapsable */}
+              <Collapsible defaultOpen={false} className="group mb-4">
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={`w-full flex items-center justify-between rounded-lg border px-4 py-2.5 text-left text-xs font-medium transition-colors ${
+                      isContractor
+                        ? "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+                        : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Info className={`h-4 w-4 ${isContractor ? "text-purple-600" : "text-blue-600"}`} />
+                      <span>
+                        {isContractor
+                          ? "Informacion sobre Contractor en el extranjero"
+                          : "Informacion sobre Contrato en Chile"}
+                      </span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Alert className={`mt-2 ${isContractor ? "bg-purple-50 border-purple-200" : "bg-blue-50 border-blue-200"}`}>
+                    <Info className={`h-4 w-4 ${isContractor ? "text-purple-600" : "text-blue-600"}`} />
+                    <AlertDescription className={`text-xs ${isContractor ? "text-purple-700" : "text-blue-700"}`}>
+                      {isContractor ? (
                         <>
+                          <strong>Contractor en el extranjero:</strong> Los 15 dias legales y 5 dias Naitus se activan al cumplir 1 ano desde el inicio del contrato.
                           <br />
-                          <strong>Estado:</strong>{" "}
-                          {contractorActivated
-                            ? `Ciclo ${contractorCycle.currentCycleNumber} activo. Proxima renovacion: ${contractorCycle.nextRenewalDate.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}`
-                            : `Pendiente de activacion. Faltan ${contractorCycle.daysUntilActivation} dias para cumplir 1 ano.`}
+                          <strong>Dias Naitus:</strong> Siempre disponibles sin condiciones. El sistema descuenta primero los dias legales y solo cuando se agotan, descuenta de los Naitus.
+                          <br />
+                          <strong>Renovacion:</strong> Al completar cada ciclo anual, los dias se renuevan (no se acumulan).
+                          {contractorCycle && (
+                            <>
+                              <br />
+                              <strong>Estado:</strong>{" "}
+                              {contractorActivated
+                                ? `Ciclo ${contractorCycle.currentCycleNumber} activo. Proxima renovacion: ${contractorCycle.nextRenewalDate.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}`
+                                : `Pendiente de activacion. Faltan ${contractorCycle.daysUntilActivation} dias para cumplir 1 ano.`}
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <strong>Dias Legales:</strong> Se acumulan desde el inicio del contrato y no se reinician.
+                          <br />
+                          <strong>Dias Naitus:</strong> 5 dias adicionales que NO son acumulables. Vencen el 31 de diciembre.
                         </>
                       )}
-                    </>
-                  ) : (
-                    <>
-                      <strong>Dias Legales:</strong> Se acumulan desde el inicio del contrato y no se reinician.
-                      <br />
-                      <strong>Dias Naitus:</strong> 5 dias adicionales que NO son acumulables. Vencen el 31 de diciembre.
-                    </>
-                  )}
-                </AlertDescription>
-              </Alert>
+                    </AlertDescription>
+                  </Alert>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Contractor cycle progress bar */}
               {isContractor && contractorCycle && (
@@ -524,7 +554,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                       Días Naitus
                     </p>
                     <p className={`text-3xl font-bold ${naitusUnlocked ? "text-green-900" : "text-amber-900"}`}>
-                      {effectiveNaitusDays.toFixed(1)}
+                      {displayNaitusDays.toFixed(1)}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       {isContractor && contractorCycle
@@ -1069,142 +1099,88 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
 
             <Separator />
 
-            {/* Historial de Contratos */}
+            {/* Documentos Adjuntos - Contrato y Anexos */}
             <div>
               <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Historial de Contratos
+                <Paperclip className="h-4 w-4 text-slate-600" />
+                Contrato y Anexos
               </h3>
               {collaboratorContracts.length === 0 ? (
                 <Card>
                   <CardContent className="p-6 text-center text-slate-500">
-                    <Briefcase className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-                    <p className="text-sm">No hay contratos registrados</p>
+                    <FileText className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm">No hay contrato registrado</p>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {collaboratorContracts.map((contract, index) => (
-                    <Card 
-                      key={contract.id} 
-                      className={`${contract.status === "activo" ? "border-green-200 bg-green-50/50" : "border-slate-200 bg-slate-50/50"}`}
-                    >
+                  {collaboratorContracts.filter(c => c.status === "activo").map((contract) => (
+                    <Card key={contract.id} className="border-slate-200">
                       <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Badge 
-                              variant={contract.status === "activo" ? "default" : "secondary"}
-                              className={contract.status === "activo" ? "bg-green-600" : ""}
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                            <FileText className="h-3.5 w-3.5" />
+                            Documentos del contrato
+                          </p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              ref={(el) => { fileInputRefs.current[contract.id] = el }}
+                              className="hidden"
+                              accept=".pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) handleFileUpload(contract.id, file)
+                                e.target.value = ""
+                              }}
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              disabled={uploadingContractId === contract.id}
+                              onClick={() => fileInputRefs.current[contract.id]?.click()}
                             >
-                              {contract.status === "activo" ? "Contrato Vigente" : "Contrato Finalizado"}
-                            </Badge>
-                            {index === 0 && contract.status === "activo" && (
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                Actual
-                              </Badge>
-                            )}
+                              {uploadingContractId === contract.id ? (
+                                <><Loader2 className="h-3 w-3 animate-spin" /> Subiendo...</>
+                              ) : (
+                                <><Upload className="h-3 w-3" /> Adjuntar PDF</>
+                              )}
+                            </Button>
                           </div>
-                          {collaboratorContracts.length > 1 && (
-                            <span className="text-xs text-slate-400">Contrato #{collaboratorContracts.length - index}</span>
-                          )}
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-xs text-slate-500">Fecha Inicio</p>
-                            <p className="font-medium">{parseLocalDate(contract.startDate).toLocaleDateString("es-CL")}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-500">Fecha Término</p>
-                            <p className="font-medium">
-                              {contract.endDate 
-                                ? parseLocalDate(contract.endDate).toLocaleDateString("es-CL")
-                                : <span className="text-green-600">Vigente</span>
-                              }
-                            </p>
-                          </div>
-                          {contract.position && (
-                            <div>
-                              <p className="text-xs text-slate-500">Cargo</p>
-                              <p className="font-medium">{contract.position}</p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* TODO: Habilitar cuando Firebase Storage esté activado
-                        <div className="mt-3 pt-3 border-t border-slate-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs font-medium text-slate-600 flex items-center gap-1">
-                              <Paperclip className="h-3 w-3" />
-                              Documentos
-                            </p>
-                            <div className="relative">
-                              <input
-                                type="file"
-                                ref={(el) => { fileInputRefs.current[contract.id] = el }}
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0]
-                                  if (file) handleFileUpload(contract.id, file)
-                                  e.target.value = ""
-                                }}
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs gap-1"
-                                disabled={uploadingContractId === contract.id}
-                                onClick={() => fileInputRefs.current[contract.id]?.click()}
-                              >
-                                {uploadingContractId === contract.id ? (
-                                  <><Loader2 className="h-3 w-3 animate-spin" /> Subiendo...</>
-                                ) : (
-                                  <><Upload className="h-3 w-3" /> Subir archivo</>
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                          {(contract.files && contract.files.length > 0) ? (
-                            <ul className="space-y-1.5">
-                              {contract.files.map((f) => (
-                                <li key={f.path} className="flex items-center justify-between bg-white rounded border border-slate-200 px-2.5 py-1.5">
-                                  <a
-                                    href={f.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[200px]"
-                                    title={f.name}
-                                  >
-                                    <Download className="h-3 w-3 flex-shrink-0" />
-                                    {f.name}
-                                  </a>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-red-400 hover:text-red-600"
-                                    disabled={deletingFile === f.path}
-                                    onClick={() => handleFileDelete(contract.id, f.path)}
-                                  >
-                                    {deletingFile === f.path ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-xs text-slate-400 italic">Sin documentos adjuntos</p>
-                          )}
-                        </div>
-                        */}
-                        
-                        {contract.statusReason && (
-                          <div className="mt-2 pt-2 border-t border-slate-200">
-                            <p className="text-xs text-slate-500">Motivo de término: <span className="text-slate-700">{contract.statusReason}</span></p>
-                          </div>
+                        {(contract.files && contract.files.length > 0) ? (
+                          <ul className="space-y-1.5">
+                            {contract.files.map((f) => (
+                              <li key={f.path} className="flex items-center justify-between bg-white rounded border border-slate-200 px-2.5 py-1.5">
+                                <a
+                                  href={f.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[200px]"
+                                  title={f.name}
+                                >
+                                  <Download className="h-3 w-3 flex-shrink-0" />
+                                  {f.name}
+                                </a>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-red-400 hover:text-red-600"
+                                  disabled={deletingFile === f.path}
+                                  onClick={() => handleFileDelete(contract.id, f.path)}
+                                >
+                                  {deletingFile === f.path ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-slate-400 italic">Sin documentos adjuntos. Adjunte el contrato o anexos en formato PDF.</p>
                         )}
                       </CardContent>
                     </Card>

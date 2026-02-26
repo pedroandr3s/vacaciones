@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Eye, UserX, ArrowUpDown } from "lucide-react"
-import { isEmployeeOnVacation, getTotalAvailable, calculateSeniority, isNaitusExpired, isBenefitExpired, calculateContractorCycle } from "@/lib/utils"
+import { Search, Eye, UserX, ArrowUpDown, Trash2 } from "lucide-react"
+import { isEmployeeOnVacation, getTotalAvailable, calculateSeniority, isNaitusExpired, isBenefitExpired, calculateContractorCycle, getEffectiveNaitusDays } from "@/lib/utils"
 import { EmployeeDetailSheet } from "@/components/employee-detail-sheet"
 import { AddCollaboratorDialog } from "@/components/add-collaborator-dialog"
 import {
@@ -18,6 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function EmployeeList() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithBalance | null>(null)
@@ -26,7 +37,8 @@ export function EmployeeList() {
   const [statusFilter, setStatusFilter] = useState<"all" | "activo" | "inactivo">("all")
   const [contractFilter, setContractFilter] = useState<"all" | "chile" | "contractor_extranjero">("all")
   const [sortBy, setSortBy] = useState<"disponibilidad" | "alfabetico" | "antiguedad">("alfabetico")
-  const { employees, balances, requests } = useData()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const { employees, balances, requests, deleteEmployee } = useData()
 
   const handleCollaboratorAdded = () => {
     // DataProvider state is reactive, no need for refreshKey
@@ -68,6 +80,17 @@ export function EmployeeList() {
   const handleViewEmployee = (employee: EmployeeWithBalance) => {
     setSelectedEmployee(employee)
     setIsDetailOpen(true)
+  }
+
+  const handleDeleteEmployee = async (employee: EmployeeWithBalance) => {
+    setDeletingId(employee.id)
+    try {
+      await deleteEmployee(employee.id, employee.email)
+    } catch (err) {
+      console.error("Error deleting employee:", err)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   return (
@@ -163,6 +186,8 @@ export function EmployeeList() {
               <TableHead className="font-semibold text-slate-900">Tipo de Contrato</TableHead>
               <TableHead className="font-semibold text-slate-900">Estado</TableHead>
               <TableHead className="font-semibold text-slate-900">Antigüedad</TableHead>
+              <TableHead className="font-semibold text-slate-900 text-right">Días Legales</TableHead>
+              <TableHead className="font-semibold text-slate-900 text-right">Días Naitus</TableHead>
               <TableHead className="font-semibold text-slate-900 text-right">Disponibilidad Total</TableHead>
               <TableHead className="font-semibold text-slate-900 text-center">Acciones</TableHead>
             </TableRow>
@@ -194,6 +219,12 @@ export function EmployeeList() {
               const naitusExpired = isNaitusExpired(employee.balance?.naitusDays || 0)
               const isContractorType = contractType === "contractor_extranjero"
               const cycleInfo = isContractorType ? calculateContractorCycle(employee.hireDate) : null
+
+              // Display directo desde la DB (ya refleja orden de consumo)
+              const legalDisplay = (balance?.legalDays || 0) - (balance?.usedDays || 0)
+              const naitusDisplay = balance
+                ? getEffectiveNaitusDays(balance, contractType as "chile" | "contractor_extranjero")
+                : 0
 
               return (
                 <TableRow
@@ -248,6 +279,16 @@ export function EmployeeList() {
                   </TableCell>
                   <TableCell className="text-slate-600">{seniority}</TableCell>
                   <TableCell className="text-right">
+                    <span className={`text-sm font-semibold ${legalDisplay > 0 ? "text-blue-700" : "text-slate-400"}`}>
+                      {legalDisplay.toFixed(1)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className={`text-sm font-semibold ${naitusDisplay > 0 ? "text-green-700" : "text-slate-400"}`}>
+                      {naitusDisplay.toFixed(1)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
                     <span
                       className={`text-base font-bold ${
                         totalAvailable > 0 ? "text-green-700" : totalAvailable === 0 ? "text-slate-600" : "text-red-700"
@@ -257,18 +298,52 @@ export function EmployeeList() {
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleViewEmployee(employee)
-                      }}
-                      className="h-8"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Gestionar
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewEmployee(employee)
+                        }}
+                        className="h-8"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Gestionar
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => e.stopPropagation()}
+                            disabled={deletingId === employee.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Eliminar colaborador</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta accion eliminara permanentemente a <strong>{employee.fullName}</strong> del sistema,
+                              incluyendo su cuenta de acceso, saldos de vacaciones, solicitudes y contratos.
+                              Esta accion no se puede deshacer.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-red-600 hover:bg-red-700"
+                              onClick={() => handleDeleteEmployee(employee)}
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               )

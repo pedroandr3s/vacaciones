@@ -337,7 +337,7 @@ export function getTotalAvailable(
   // Días legales disponibles = acumulados - tomados
   const availableLegal = legalDays - usedDays
 
-  // Días Naitus: para contractors siempre disponibles, para Chile requieren 15 días usados
+  // Días Naitus efectivos segun tipo de contrato
   const balance = { legalDays, naitusDays, debtDays, usedDays } as any
   const effectiveNaitus = getEffectiveNaitusDays(balance, contractType)
 

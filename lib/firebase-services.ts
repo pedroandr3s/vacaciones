@@ -5,6 +5,8 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
 } from "firebase/firestore"
 import { db } from "./firebase"
 import type {
@@ -139,6 +141,37 @@ export async function updateContract(
   updates: Partial<Contract>
 ): Promise<void> {
   await withRetry(() => updateDoc(doc(db, CONTRACTS, id), updates))
+}
+
+// ---- Delete employee and all associated data ----
+
+export async function deleteEmployeeData(employeeId: string): Promise<void> {
+  // Delete vacation balances
+  const balSnap = await getDocs(
+    query(collection(db, VACATION_BALANCES), where("employeeId", "==", employeeId))
+  )
+  for (const d of balSnap.docs) {
+    await deleteDoc(d.ref)
+  }
+
+  // Delete vacation requests
+  const reqSnap = await getDocs(
+    query(collection(db, VACATION_REQUESTS), where("employeeId", "==", employeeId))
+  )
+  for (const d of reqSnap.docs) {
+    await deleteDoc(d.ref)
+  }
+
+  // Delete contracts
+  const conSnap = await getDocs(
+    query(collection(db, CONTRACTS), where("collaboratorId", "==", employeeId))
+  )
+  for (const d of conSnap.docs) {
+    await deleteDoc(d.ref)
+  }
+
+  // Delete the employee document
+  await deleteDoc(doc(db, EMPLOYEES, employeeId))
 }
 
 // ---- Utility: generate Firestore doc ID ----

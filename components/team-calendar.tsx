@@ -43,9 +43,18 @@ export function TeamCalendar() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
   }
 
+  const goToToday = () => {
+    const now = new Date()
+    setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1))
+  }
+
   const daysInMonth = getDaysInMonth(currentDate)
   const firstDay = getFirstDayOfMonth(currentDate)
   const monthName = currentDate.toLocaleDateString("es-CL", { month: "long", year: "numeric" })
+
+  // Today's date string for highlighting
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
 
   // Create array of day cells
   const dayCells = []
@@ -114,6 +123,9 @@ export function TeamCalendar() {
               <Button variant="outline" size="sm" onClick={previousMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Hoy
+              </Button>
               <Button variant="outline" size="sm" onClick={nextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -131,17 +143,19 @@ export function TeamCalendar() {
             ))}
 
             {/* Calendar cells */}
-            {dayCells.map((cell, index) => (
+            {dayCells.map((cell, index) => {
+              const isToday = cell?.date === todayStr
+              return (
               <div
                 key={index}
                 className={`min-h-20 border relative ${
-                  cell ? (cell.holiday ? "bg-red-50 border-red-300 border-2" : "bg-white border-slate-200") : "bg-slate-50 border-slate-200"
-                } ${cell && cell.vacations.length > 0 && !cell.holiday ? "bg-blue-50" : ""}`}
+                  cell ? (cell.holiday ? "bg-red-50 border-red-300 border-2" : isToday ? "bg-blue-50 border-blue-400 border-2" : "bg-white border-slate-200") : "bg-slate-50 border-slate-200"
+                } ${cell && cell.vacations.length > 0 && !cell.holiday && !isToday ? "bg-blue-50" : ""}`}
               >
                 {cell && (
                   <>
                     <div className="p-1">
-                      <div className={`text-xs font-medium mb-1 ${cell.holiday ? "text-red-700" : "text-slate-700"}`}>
+                      <div className={`text-xs font-medium mb-1 ${cell.holiday ? "text-red-700" : isToday ? "text-white bg-blue-600 rounded-full w-5 h-5 flex items-center justify-center" : "text-slate-700"}`}>
                         {cell.day}
                       </div>
                       
@@ -190,7 +204,7 @@ export function TeamCalendar() {
                   </>
                 )}
               </div>
-            ))}
+            )})}
           </div>
 
           {/* Legend */}
