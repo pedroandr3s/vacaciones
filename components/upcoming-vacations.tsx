@@ -274,14 +274,14 @@ export function UpcomingVacations({ refreshKey }: { refreshKey?: number }) {
                                     : "bg-red-50 border-red-200 text-red-700"
                               }`}
                             >
-                              {totalAvailable > 0 ? `${totalAvailable.toFixed(1)}d` : `${totalAvailable.toFixed(1)}d`}
+                              {totalAvailable > 0 ? `${totalAvailable.toFixed(2)}d` : `${totalAvailable.toFixed(2)}d`}
                               {totalAvailable <= 0 && (
                                 <AlertCircle className="h-3 w-3 inline-block ml-0.5 -mt-0.5" />
                               )}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="left">
-                            <p className="text-xs">Saldo disponible: {totalAvailable.toFixed(1)} dias</p>
+                            <p className="text-xs">Saldo disponible: {totalAvailable.toFixed(2)} dias</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

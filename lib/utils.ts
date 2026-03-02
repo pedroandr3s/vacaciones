@@ -534,7 +534,7 @@ export function calculateAccruedLegalDays(
   const monthsWorked = getMonthsBetweenDates(hire, today)
   const accruedDays = monthsWorked * 1.25
   
-  return Math.round(accruedDays * 10) / 10 // Redondear a 1 decimal
+  return Math.round(accruedDays * 100) / 100 // Redondear a 2 decimales
 }
 
 /**

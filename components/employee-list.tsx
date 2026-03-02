@@ -280,12 +280,12 @@ export function EmployeeList() {
                   <TableCell className="text-slate-600">{seniority}</TableCell>
                   <TableCell className="text-right">
                     <span className={`text-sm font-semibold ${legalDisplay > 0 ? "text-blue-700" : "text-slate-400"}`}>
-                      {legalDisplay.toFixed(1)}
+                      {legalDisplay.toFixed(2)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <span className={`text-sm font-semibold ${naitusDisplay > 0 ? "text-green-700" : "text-slate-400"}`}>
-                      {naitusDisplay.toFixed(1)}
+                      {naitusDisplay.toFixed(2)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -294,7 +294,7 @@ export function EmployeeList() {
                         totalAvailable > 0 ? "text-green-700" : totalAvailable === 0 ? "text-slate-600" : "text-red-700"
                       }`}
                     >
-                      {totalAvailable.toFixed(1)} días
+                      {totalAvailable.toFixed(2)} días
                     </span>
                   </TableCell>
                   <TableCell className="text-center">

@@ -218,7 +218,7 @@ export function EmployeeDashboard() {
                           return (
                             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg text-xs">
                               <p className="font-medium text-slate-900">{d.name}</p>
-                              <p className="text-slate-600">{Number(d.value).toFixed(1)} dias</p>
+                              <p className="text-slate-600">{Number(d.value).toFixed(2)} dias</p>
                             </div>
                           )
                         }}
@@ -228,7 +228,7 @@ export function EmployeeDashboard() {
                 </ChartContainer>
                 {/* Center label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-3xl font-bold text-slate-900">{legalAvailable.toFixed(1)}</span>
+                  <span className="text-3xl font-bold text-slate-900">{legalAvailable.toFixed(2)}</span>
                   <span className="text-xs text-slate-500">disponibles</span>
                 </div>
               </div>
@@ -239,14 +239,14 @@ export function EmployeeDashboard() {
                   <div className="w-3 h-3 rounded-full bg-blue-600 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-slate-500">Utilizados</p>
-                    <p className="text-sm font-semibold text-slate-800">{legalDaysUsed.toFixed(1)} dias</p>
+                    <p className="text-sm font-semibold text-slate-800">{legalDaysUsed.toFixed(2)} dias</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-slate-200 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-slate-500">Disponibles</p>
-                    <p className="text-sm font-semibold text-slate-800">{legalAvailable.toFixed(1)} dias</p>
+                    <p className="text-sm font-semibold text-slate-800">{legalAvailable.toFixed(2)} dias</p>
                   </div>
                 </div>
               </div>
@@ -255,7 +255,7 @@ export function EmployeeDashboard() {
               <div className="w-full mt-4 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-slate-500">
                   <span>{usagePercent}% utilizado</span>
-                  <span>{legalDaysAccumulated.toFixed(1)} acumulados</span>
+                  <span>{legalDaysAccumulated.toFixed(2)} acumulados</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2">
                   <div
@@ -290,15 +290,15 @@ export function EmployeeDashboard() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <p className="text-2xl font-bold text-blue-700">{legalAvailable.toFixed(1)}</p>
+                <p className="text-2xl font-bold text-blue-700">{legalAvailable.toFixed(2)}</p>
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>{isContractor ? "Por ciclo" : "Acumulados"}</span>
-                    <span className="font-medium text-slate-700">{legalDaysAccumulated.toFixed(1)}</span>
+                    <span className="font-medium text-slate-700">{legalDaysAccumulated.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>Tomados</span>
-                    <span className="font-medium text-slate-700">{legalDaysUsed.toFixed(1)}</span>
+                    <span className="font-medium text-slate-700">{legalDaysUsed.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -334,7 +334,7 @@ export function EmployeeDashboard() {
                   </TooltipProvider>
                 </div>
                 <p className={`text-2xl font-bold ${naitusBlocked ? "text-slate-400" : "text-emerald-700"}`}>
-                  {naitusAvailable.toFixed(1)}
+                  {naitusAvailable.toFixed(2)}
                 </p>
                 <div className="mt-2">
                   {naitusBlocked ? (
@@ -356,12 +356,12 @@ export function EmployeeDashboard() {
             <Card className="relative overflow-hidden bg-slate-900 text-white">
               <CardContent className="p-4">
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Total Disponible</p>
-                <p className="text-2xl font-bold text-white">{totalAvailable.toFixed(1)}</p>
+                <p className="text-2xl font-bold text-white">{totalAvailable.toFixed(2)}</p>
                 <div className="mt-2 space-y-1">
                   <p className="text-xs text-slate-400">Legales + Naitus - Deuda</p>
                   {debtDays < 0 && (
                     <p className="text-xs text-red-400 font-medium">
-                      Deuda: {Math.abs(debtDays).toFixed(1)} dias
+                      Deuda: {Math.abs(debtDays).toFixed(2)} dias
                     </p>
                   )}
                 </div>
@@ -402,7 +402,7 @@ export function EmployeeDashboard() {
                         return (
                           <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg text-xs">
                             <p className="font-medium text-slate-900">{d.payload?.label}</p>
-                            <p className="text-slate-600">{Number(d.value).toFixed(1)} dias disponibles</p>
+                            <p className="text-slate-600">{Number(d.value).toFixed(2)} dias disponibles</p>
                           </div>
                         )
                       }}

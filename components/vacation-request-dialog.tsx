@@ -236,7 +236,7 @@ export function VacationRequestDialog({
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-blue-700">Disponibles:</span>
-                <span className="text-blue-700">{totalAvailable.toFixed(1)} días</span>
+                <span className="text-blue-700">{totalAvailable.toFixed(2)} días</span>
               </div>
             </div>
           )}
@@ -245,9 +245,9 @@ export function VacationRequestDialog({
             <Alert className="bg-amber-50 border-amber-300">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-900 text-sm">
-                <strong>Atención:</strong> Estás solicitando {debtAmount.toFixed(1)} días más de los que tienes
+                <strong>Atención:</strong> Estás solicitando {debtAmount.toFixed(2)} días más de los que tienes
                 disponibles. Si se aprueba, quedarás con un saldo en deuda de{" "}
-                <strong className="text-amber-700">-{debtAmount.toFixed(1)} días</strong>.
+                <strong className="text-amber-700">-{debtAmount.toFixed(2)} días</strong>.
                 <p className="mt-2 text-xs text-amber-800">
                   Toda solicitud (con saldo a favor o en deuda) está sujeta a la aprobación de la jefatura.
                 </p>

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs -r kill -9)",
+      "Read(//c/Users/pedro/AppData/Local/Temp/claude/c--Users-pedro-OneDrive-Desktop-vacation-management-app/tasks/**)",
+      "Bash(ls /c/Users/pedro/OneDrive/Desktop/vacation-management-app/.env*)",
+      "Bash(ls /c/Users/pedro/OneDrive/Desktop/vacation-management-app/*.env*)",
+      "Bash(npx tsx scripts/test-delete.ts)",
+      "Bash(lsof -ti:3000 -ti:3001)",
+      "Bash(npx vercel env ls)",
+      "Bash(for f in components/admin-register-unpaid-leave-dialog.tsx components/employee-dashboard.tsx components/employee-detail-sheet.tsx components/employee-list.tsx components/register-vacation-dialog.tsx components/upcoming-vacations.tsx components/vacation-request-dialog.tsx)",
+      "Bash(do sed -i 's/toFixed\\(1\\)/toFixed\\(2\\)/g' \"$f\")",
+      "Bash(done)"
+    ]
+  }
+}

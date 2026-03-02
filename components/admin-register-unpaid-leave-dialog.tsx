@@ -395,7 +395,7 @@ export function AdminRegisterUnpaidLeaveDialog({
                               : "bg-red-50 text-red-700"
                           }
                         >
-                          {totalAvailable.toFixed(1)} dias vac.
+                          {totalAvailable.toFixed(2)} dias vac.
                         </Badge>
                         {emp.contractType === "contractor_extranjero" && (
                           <Badge variant="secondary" className="text-xs">
@@ -643,7 +643,7 @@ export function AdminRegisterUnpaidLeaveDialog({
                           selectedEmployee.balance.naitusDays,
                           selectedEmployee.balance.usedDays,
                           selectedEmployee.balance.debtDays
-                        ).toFixed(1)
+                        ).toFixed(2)
                       : "0.0"}{" "}
                     dias
                   </p>
@@ -659,7 +659,7 @@ export function AdminRegisterUnpaidLeaveDialog({
                           selectedEmployee.balance.naitusDays,
                           selectedEmployee.balance.usedDays,
                           selectedEmployee.balance.debtDays
-                        ).toFixed(1)
+                        ).toFixed(2)
                       : "0.0"}{" "}
                     dias
                   </p>

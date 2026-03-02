@@ -388,7 +388,7 @@ export function RegisterVacationDialog({
                                               : "bg-red-50 text-red-700"
                                           }
                                         >
-                                          {totalAvailable.toFixed(1)} días
+                                          {totalAvailable.toFixed(2)} días
                                         </Badge>
                                         {contractType === "contractor_extranjero" && (
                                           <Badge variant="secondary" className="text-xs">
@@ -414,7 +414,7 @@ export function RegisterVacationDialog({
                 variant="outline" 
                 className={`text-sm px-3 py-1 ${currentBalance.totalAvailable > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"}`}
               >
-                {currentBalance.totalAvailable.toFixed(1)} días disponibles
+                {currentBalance.totalAvailable.toFixed(2)} días disponibles
               </Badge>
             </div>
           )}
@@ -525,10 +525,10 @@ export function RegisterVacationDialog({
                       <span className="text-sm font-medium text-blue-900">Días Legales</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400 line-through">{currentBalance.availableLegal.toFixed(1)}</span>
+                      <span className="text-sm text-slate-400 line-through">{currentBalance.availableLegal.toFixed(2)}</span>
                       <ArrowRight className="h-4 w-4 text-blue-400" />
                       <span className={`text-lg font-bold ${simulation.projectedLegal >= 0 ? "text-blue-700" : "text-red-600"}`}>
-                        {simulation.projectedLegal.toFixed(1)}
+                        {simulation.projectedLegal.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -553,10 +553,10 @@ export function RegisterVacationDialog({
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400 line-through">{currentBalance.effectiveNaitus.toFixed(1)}</span>
+                      <span className="text-sm text-slate-400 line-through">{currentBalance.effectiveNaitus.toFixed(2)}</span>
                       <ArrowRight className={`h-4 w-4 ${currentBalance.naitusUnlocked ? "text-green-400" : "text-slate-300"}`} />
                       <span className={`text-lg font-bold ${currentBalance.naitusUnlocked ? (simulation.projectedNaitus >= 0 ? "text-green-700" : "text-red-600") : "text-slate-400"}`}>
-                        {simulation.projectedNaitus.toFixed(1)}
+                        {simulation.projectedNaitus.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -574,9 +574,9 @@ export function RegisterVacationDialog({
                         <span className="text-sm font-medium text-red-900">Días en Deuda</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-400 line-through">{Math.abs(currentBalance.debtDays).toFixed(1)}</span>
+                        <span className="text-sm text-slate-400 line-through">{Math.abs(currentBalance.debtDays).toFixed(2)}</span>
                         <ArrowRight className="h-4 w-4 text-red-400" />
-                        <span className="text-lg font-bold text-red-700">{Math.abs(simulation.projectedDebt).toFixed(1)}</span>
+                        <span className="text-lg font-bold text-red-700">{Math.abs(simulation.projectedDebt).toFixed(2)}</span>
                       </div>
                     </div>
                     {simulation.debtConsumed > 0 && (
@@ -593,10 +593,10 @@ export function RegisterVacationDialog({
                       Total Disponible
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-base text-slate-400 line-through">{currentBalance.totalAvailable.toFixed(1)}</span>
+                      <span className="text-base text-slate-400 line-through">{currentBalance.totalAvailable.toFixed(2)}</span>
                       <ArrowRight className={`h-5 w-5 ${simulation.willGoIntoDebt ? "text-red-400" : "text-emerald-500"}`} />
                       <span className={`text-2xl font-bold ${simulation.willGoIntoDebt ? "text-red-700" : "text-emerald-700"}`}>
-                        {simulation.totalAvailableAfter.toFixed(1)}
+                        {simulation.totalAvailableAfter.toFixed(2)}
                       </span>
                     </div>
                   </div>

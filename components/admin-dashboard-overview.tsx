@@ -75,10 +75,10 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
         id: emp.id,
         name: emp.fullName.split(" ").slice(0, 2).join(" "),
         shortName: emp.fullName.split(" ")[0],
-        totalAvailable: Math.round(totalAvail * 10) / 10,
+        totalAvailable: Math.round(totalAvail * 100) / 100,
         usedDays,
-        availableLegal: Math.round(availableLegal * 10) / 10,
-        availableNaitus: Math.round(availableNaitus * 10) / 10,
+        availableLegal: Math.round(availableLegal * 100) / 100,
+        availableNaitus: Math.round(availableNaitus * 100) / 100,
         legalDays: legalDaysTotal,
         naitusDays: naitusDaysRaw,
         debtDays: balance?.debtDays || 0,
@@ -91,7 +91,7 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
     const totalAvailableAll = balanceData.reduce((s, e) => s + e.totalAvailable, 0)
     const totalUsedAll = balanceData.reduce((s, e) => s + e.usedDays, 0)
     const totalCapacityAll = balanceData.reduce((s, e) => s + e.totalCapacity, 0)
-    const avgAvailable = activeEmployees.length > 0 ? Math.round((totalAvailableAll / activeEmployees.length) * 10) / 10 : 0
+    const avgAvailable = activeEmployees.length > 0 ? Math.round((totalAvailableAll / activeEmployees.length) * 100) / 100 : 0
     const usagePercentage = totalCapacityAll > 0 ? Math.round((totalUsedAll / totalCapacityAll) * 100) : 0
     const employeesWithDebt = balanceData.filter((e) => e.debtDays < 0).length
 

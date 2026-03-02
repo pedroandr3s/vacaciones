@@ -519,7 +519,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                     {/* Días Acumulados */}
                     <div className="text-center p-3 bg-slate-50 rounded-lg border">
                       <p className="text-xs text-slate-500 mb-1">Días Acumulados</p>
-                      <p className="text-2xl font-bold text-slate-800">{(balance?.legalDays || 15).toFixed(1)}</p>
+                      <p className="text-2xl font-bold text-slate-800">{(balance?.legalDays || 15).toFixed(2)}</p>
                       <p className="text-[10px] text-slate-400 mt-1">
                         {isContractor
                           ? contractorActivated ? "Por ciclo anual" : "Pendiente"
@@ -529,13 +529,13 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                     {/* Días Tomados */}
                     <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-100">
                       <p className="text-xs text-amber-600 mb-1">Días Tomados</p>
-                      <p className="text-2xl font-bold text-amber-700">{(balance?.usedDays || 0).toFixed(1)}</p>
+                      <p className="text-2xl font-bold text-amber-700">{(balance?.usedDays || 0).toFixed(2)}</p>
                       <p className="text-[10px] text-amber-500 mt-1">Ya utilizados</p>
                     </div>
                     {/* Saldo Disponible */}
                     <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-xs text-blue-600 mb-1">Saldo Disponible</p>
-                      <p className="text-2xl font-bold text-blue-700">{availableLegalDays.toFixed(1)}</p>
+                      <p className="text-2xl font-bold text-blue-700">{availableLegalDays.toFixed(2)}</p>
                       <p className="text-[10px] text-blue-500 mt-1">Para solicitar</p>
                     </div>
                   </div>
@@ -551,7 +551,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                       Días Naitus
                     </p>
                     <p className={`text-3xl font-bold ${naitusUnlocked ? "text-green-900" : "text-amber-900"}`}>
-                      {displayNaitusDays.toFixed(1)}
+                      {displayNaitusDays.toFixed(2)}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       {isContractor && contractorCycle
@@ -582,7 +582,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                       Días en Deuda
                     </p>
                     <p className={`text-3xl font-bold ${(balance?.debtDays || 0) < 0 ? "text-red-700" : "text-slate-400"}`}>
-                      {Math.abs(balance?.debtDays || 0).toFixed(1)}
+                      {Math.abs(balance?.debtDays || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       {(balance?.debtDays || 0) < 0 ? "Pendiente de compensar" : "Sin deudas"}
@@ -601,7 +601,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                         Legales + Naitus - Deuda
                       </p>
                     </div>
-                    <p className="text-4xl font-bold">{totalAvailable.toFixed(1)}</p>
+                    <p className="text-4xl font-bold">{totalAvailable.toFixed(2)}</p>
                   </div>
                 </CardContent>
               </Card>
