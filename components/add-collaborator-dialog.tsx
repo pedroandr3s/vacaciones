@@ -249,7 +249,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           email: formData.email,
           fullName: formData.fullName,
           rut: formData.rut,
-          birthDate: formData.birthDate || undefined,
+          ...(formData.birthDate ? { birthDate: formData.birthDate } : {}),
           hireDate: formData.hireDate,
           position: formData.position,
           role: "employee",
