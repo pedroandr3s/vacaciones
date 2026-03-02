@@ -19,6 +19,12 @@ yarn-error.log*
 # env files
 .env*
 
+# firebase service account keys
+*-firebase-adminsdk-*.json
+
+# test scripts
+/scripts/
+
 # vercel
 .vercel
 

@@ -8,13 +8,13 @@ import {
 import { getStorage } from "firebase/storage"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDuDH0viUla3SYze5yt5IPasdCGXJrR8Qg",
-  authDomain: "vacaciones-cb783.firebaseapp.com",
-  projectId: "vacaciones-cb783",
-  storageBucket: "vacaciones-cb783.firebasestorage.app",
-  messagingSenderId: "1000740470102",
-  appId: "1:1000740470102:web:30e91b231f649b229f6af7",
-  measurementId: "G-SF8JP55130",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
 const isNewApp = getApps().length === 0

@@ -141,15 +141,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   )
 
   const deleteEmployee = useCallback(async (id: string, email: string) => {
-    // 1. Delete from Firebase Auth via API route
-    const authRes = await fetch("/api/delete-user", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    })
-    const authResult = await authRes.json()
-    if (!authResult.success) {
-      throw new Error(authResult.error || "Error eliminando usuario de Auth")
+    // 1. Try to delete from Firebase Auth via API route (non-blocking)
+    try {
+      await fetch("/api/delete-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+    } catch (authErr) {
+      console.warn("Could not delete Auth user (may not be configured):", authErr)
     }
 
     // 2. Delete all Firestore data

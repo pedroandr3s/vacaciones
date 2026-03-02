@@ -67,7 +67,6 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
   const [isCreatingRehire, setIsCreatingRehire] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
-  const [sheetWarning, setSheetWarning] = useState("")
 
   const isContractor = formData.contractType === "contractor_extranjero"
   const idLabel = isContractor ? "DNI" : "RUT"
@@ -140,7 +139,6 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
   const handleSubmit = async () => {
     setIsSubmitting(true)
     setSubmitError("")
-    setSheetWarning("")
     const now = new Date().toISOString()
 
     try {
@@ -208,7 +206,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           contrasena: provisionalPassword,
         })
         if (!sheetResult.success) {
-          setSheetWarning(sheetResult.message)
+          console.warn("[Google Sheets]", sheetResult.message)
         }
 
         // Send to n8n webhook
@@ -306,7 +304,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           contrasena: provisionalPassword,
         })
         if (!sheetResult.success) {
-          setSheetWarning(sheetResult.message)
+          console.warn("[Google Sheets]", sheetResult.message)
         }
 
         // 6. Send to n8n webhook
@@ -348,7 +346,6 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
     setShowRehirePrompt(false)
     setIsCreatingRehire(false)
     setSubmitError("")
-    setSheetWarning("")
     setOpen(false)
   }
 
@@ -368,7 +365,6 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
     <Dialog open={open} onOpenChange={(isOpen) => {
         if (isOpen) {
           setSubmitError("")
-          setSheetWarning("")
           setOpen(true)
         } else {
           handleClose()
@@ -552,15 +548,6 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           <Alert variant="destructive" className="mx-6">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>{submitError}</AlertDescription>
-          </Alert>
-        )}
-
-        {sheetWarning && (
-          <Alert className="mx-6 bg-amber-50 border-amber-200">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-700 text-sm">
-              El colaborador fue creado correctamente, pero: {sheetWarning}
-            </AlertDescription>
           </Alert>
         )}
 
