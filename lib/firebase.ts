@@ -1,11 +1,12 @@
-import { initializeApp, getApps, getApp } from "firebase/app"
-import { getFirestore } from "firebase/firestore"
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app"
+import { getFirestore, type Firestore } from "firebase/firestore"
 import {
   initializeAuth,
   browserLocalPersistence,
   getAuth,
+  type Auth,
 } from "firebase/auth"
-import { getStorage } from "firebase/storage"
+import { getStorage, type FirebaseStorage } from "firebase/storage"
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,16 +18,44 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-const isNewApp = getApps().length === 0
-const app = isNewApp ? initializeApp(firebaseConfig) : getApp()
+// Lazy singletons - avoid initializing during SSR build
+let _app: FirebaseApp | null = null
+let _db: Firestore | null = null
+let _auth: Auth | null = null
+let _storage: FirebaseStorage | null = null
 
-export const db = getFirestore(app)
+function getFirebaseApp(): FirebaseApp {
+  if (!_app) {
+    _app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+  }
+  return _app
+}
 
-// On server (build/SSR) use getAuth; on client use initializeAuth with persistence
-const isBrowser = typeof window !== "undefined"
-export const auth =
-  isNewApp && isBrowser
-    ? initializeAuth(app, { persistence: browserLocalPersistence })
-    : getAuth(app)
+export const db: Firestore = new Proxy({} as Firestore, {
+  get(_, prop) {
+    if (!_db) _db = getFirestore(getFirebaseApp())
+    return (_db as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
 
-export const storage = getStorage(app)
+export const auth: Auth = new Proxy({} as Auth, {
+  get(_, prop) {
+    if (!_auth) {
+      const app = getFirebaseApp()
+      const isBrowser = typeof window !== "undefined"
+      const isNew = getApps().length <= 1
+      _auth =
+        isNew && isBrowser
+          ? initializeAuth(app, { persistence: browserLocalPersistence })
+          : getAuth(app)
+    }
+    return (_auth as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
+
+export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
+  get(_, prop) {
+    if (!_storage) _storage = getStorage(getFirebaseApp())
+    return (_storage as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
