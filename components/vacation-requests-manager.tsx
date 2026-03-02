@@ -10,14 +10,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Check, X, Calendar, Filter, Paperclip } from "lucide-react"
+import { Check, X, Calendar, Filter, Paperclip, Trash2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getAbsenceTypeLabel } from "@/lib/utils"
 import { hasOverlappingRequests } from "@/lib/utils" // Declare the variable before using it
 import { useToast } from "@/hooks/use-toast"
 
 export function VacationRequestsManager() {
-  const { employees, balances, requests, updateRequest, updateBalance } = useData()
+  const { employees, balances, requests, updateRequest, updateBalance, deleteRequest } = useData()
   const [actionResult, setActionResult] = useState<string | null>(null)
   const { toast } = useToast()
   
@@ -172,6 +172,33 @@ export function VacationRequestsManager() {
       variant: "destructive",
     })
     
+    setTimeout(() => setActionResult(null), 4000)
+  }
+
+  const handleDeleteRequest = async (requestId: string) => {
+    const request = requests.find((r) => r.id === requestId)
+    if (!request) return
+
+    // If approved, revert balance changes
+    if (request.status === "approved") {
+      const balance = balances.find((b) => b.employeeId === request.employeeId)
+      if (balance) {
+        const balanceUpdates: Record<string, unknown> = {
+          usedDays: balance.usedDays - request.legalDaysUsed,
+          updatedAt: new Date().toISOString(),
+        }
+        if (request.naitusDaysUsed > 0) {
+          balanceUpdates.naitusDays = balance.naitusDays + request.naitusDaysUsed
+        }
+        if (request.debtDaysUsed > 0) {
+          balanceUpdates.debtDays = (balance.debtDays || 0) + request.debtDaysUsed
+        }
+        await updateBalance(balance.id, balanceUpdates as Partial<typeof balance>)
+      }
+    }
+
+    await deleteRequest(requestId)
+    setActionResult("✓ Solicitud eliminada correctamente.")
     setTimeout(() => setActionResult(null), 4000)
   }
 
@@ -437,28 +464,40 @@ export function VacationRequestsManager() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {request.status === "pending" ? (
-                          <div className="flex justify-end gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                              onClick={() => handleApprove(request.id)}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleReject(request.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
+                        <div className="flex justify-end gap-1">
+                          {request.status === "pending" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={() => handleApprove(request.id)}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => handleReject(request.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => {
+                              if (confirm("¿Eliminar esta solicitud?" + (request.status === "approved" ? " Se revertirán los días consumidos." : ""))) {
+                                handleDeleteRequest(request.id)
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

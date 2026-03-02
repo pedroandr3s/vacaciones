@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { getTotalAvailable, parseLocalDate } from "@/lib/utils"
+import { getTotalAvailable, parseLocalDate, getEffectiveNaitusDays } from "@/lib/utils"
 import { useData } from "@/contexts/data-context"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -67,7 +67,9 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
       const legalDaysTotal = balance?.legalDays || 0
       const naitusDaysRaw = balance?.naitusDays || 0
       const availableLegal = Math.max(0, legalDaysTotal - usedDays)
-      const availableNaitus = Math.max(0, naitusDaysRaw)
+      const availableNaitus = balance
+        ? getEffectiveNaitusDays(balance, ct)
+        : 0
 
       return {
         id: emp.id,

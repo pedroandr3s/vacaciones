@@ -27,6 +27,7 @@ import {
   updateVacationBalance as fsUpdateBalance,
   createVacationRequest as fsCreateRequest,
   updateVacationRequest as fsUpdateRequest,
+  deleteVacationRequest as fsDeleteRequest,
   createHoliday as fsCreateHoliday,
   firebaseUpdateHoliday as fsUpdateHoliday,
   firebaseDeleteHoliday as fsDeleteHoliday,
@@ -58,6 +59,7 @@ interface DataContextType {
   // Request mutations
   addRequest: (req: VacationRequest) => Promise<void>
   updateRequest: (id: string, updates: Partial<VacationRequest>) => Promise<void>
+  deleteRequest: (id: string) => Promise<void>
 
   // Holiday mutations
   addHoliday: (h: Holiday) => Promise<void>
@@ -141,15 +143,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
   )
 
   const deleteEmployee = useCallback(async (id: string, email: string) => {
-    // 1. Try to delete from Firebase Auth via API route (non-blocking)
+    // 1. Delete from Firebase Auth via API route
     try {
-      await fetch("/api/delete-user", {
+      const authRes = await fetch("/api/delete-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       })
+      const authResult = await authRes.json()
+      if (!authResult.success) {
+        console.warn("Auth deletion warning:", authResult.error)
+      }
     } catch (authErr) {
-      console.warn("Could not delete Auth user (may not be configured):", authErr)
+      console.warn("Could not delete Auth user:", authErr)
     }
 
     // 2. Delete all Firestore data
@@ -195,6 +201,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     },
     []
   )
+
+  const deleteRequest = useCallback(async (id: string) => {
+    await fsDeleteRequest(id)
+    setRequests((prev) => prev.filter((r) => r.id !== id))
+  }, [])
 
   // ---- Holiday mutations ----
 
@@ -252,6 +263,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updateBalance,
         addRequest,
         updateRequest,
+        deleteRequest,
         addHoliday,
         updateHoliday,
         deleteHoliday,

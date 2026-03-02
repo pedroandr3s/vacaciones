@@ -103,6 +103,10 @@ export async function updateVacationRequest(
   await withRetry(() => updateDoc(doc(db, VACATION_REQUESTS, id), updates))
 }
 
+export async function deleteVacationRequest(id: string): Promise<void> {
+  await deleteDoc(doc(db, VACATION_REQUESTS, id))
+}
+
 // ---- Holidays ----
 
 export async function fetchHolidays(): Promise<Holiday[]> {

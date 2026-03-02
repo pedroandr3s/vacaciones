@@ -72,8 +72,8 @@ export type Holiday = {
 // Tipos para Gestión de Contratos (Reingresos)
 export type ContractFile = {
   name: string // Nombre original del archivo
-  url: string // URL de descarga en Firebase Storage
-  path: string // Path en Storage para poder eliminar
+  url: string // data:application/pdf;base64,... stored in Firestore
+  path: string // Unique file identifier
   uploadedAt: string
 }
 

@@ -14,8 +14,6 @@ import { Calendar, Lock, AlertTriangle, FileText, Power, Briefcase, History, Cal
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useData } from "@/contexts/data-context"
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
-import { storage } from "@/lib/firebase"
 import { RegisterVacationDialog } from "@/components/register-vacation-dialog"
 import { AdminRegisterUnpaidLeaveDialog } from "@/components/admin-register-unpaid-leave-dialog"
 import {
@@ -58,20 +56,26 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const handleFileUpload = async (contractId: string, file: File) => {
+    if (file.size > 900_000) {
+      alert("El archivo es demasiado grande. Máximo 900KB.")
+      return
+    }
     setUploadingContractId(contractId)
     try {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
-      const path = `contracts/${contractId}/${Date.now()}_${safeName}`
-      const storageRef = ref(storage, path)
-      await uploadBytes(storageRef, file)
-      const url = await getDownloadURL(storageRef)
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
 
+      const fileId = `${contractId}_${Date.now()}`
       const contract = contracts.find((c) => c.id === contractId)
       const existingFiles: ContractFile[] = contract?.files || []
       const newFile: ContractFile = {
         name: file.name,
-        url,
-        path,
+        url: base64,
+        path: fileId,
         uploadedAt: new Date().toISOString(),
       }
 
@@ -89,13 +93,6 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
   const handleFileDelete = async (contractId: string, filePath: string) => {
     setDeletingFile(filePath)
     try {
-      const storageRef = ref(storage, filePath)
-      try {
-        await deleteObject(storageRef)
-      } catch {
-        console.warn("File not found in storage, removing reference only")
-      }
-
       const contract = contracts.find((c) => c.id === contractId)
       const updatedFiles = (contract?.files || []).filter((f) => f.path !== filePath)
 

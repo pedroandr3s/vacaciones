@@ -353,8 +353,6 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
     formData.fullName.trim() !== "" &&
     formData.email.trim() !== "" &&
     formData.hireDate !== "" &&
-    formData.initialBalance.trim() !== "" &&
-    !isNaN(parseFloat(formData.initialBalance)) &&
     (!existingCollaborator || existingCollaborator.status === "inactivo")
 
   const handleRutChange = (value: string) => {
@@ -522,14 +520,14 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="initialBalance">Saldo Inicial de Vacaciones *</Label>
+              <Label htmlFor="initialBalance">Saldo Inicial de Vacaciones</Label>
               <Input
                 id="initialBalance"
                 type="number"
                 step="0.5"
                 value={formData.initialBalance}
                 onChange={(e) => handleInputChange("initialBalance", e.target.value)}
-                placeholder="Ej: 15"
+                placeholder="Vacío = sin vacaciones tomadas"
               />
             </div>
           </div>
