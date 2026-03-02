@@ -520,16 +520,16 @@ export function calculateAccruedLegalDays(
   hireDate: string,
   contractType: "chile" | "contractor_extranjero" = "chile"
 ): number {
-  const hire = new Date(hireDate)
+  const hire = parseLocalDate(hireDate)
   const today = new Date()
-  
+
   // Para contractors extranjeros: 15 días se activan al cumplir 1 año
   if (contractType === "contractor_extranjero") {
     const cycle = calculateContractorCycle(hireDate)
     // Si no ha cumplido el primer año, tiene 0 días legales
     return cycle.legalDaysEntitled
   }
-  
+
   // Para contratos en Chile: acumulación perpetua desde inicio del contrato
   const monthsWorked = getMonthsBetweenDates(hire, today)
   const accruedDays = monthsWorked * 1.25
@@ -541,17 +541,23 @@ export function calculateAccruedLegalDays(
  * Calcula los meses completos entre dos fechas
  */
 export function getMonthsBetweenDates(startDate: Date, endDate: Date): number {
-  const years = endDate.getFullYear() - startDate.getFullYear()
-  const months = endDate.getMonth() - startDate.getMonth()
-  const days = endDate.getDate() - startDate.getDate()
-  
-  let totalMonths = years * 12 + months
-  
+  // Normalize to local date parts to avoid UTC timezone shift issues
+  // (new Date("YYYY-MM-DD") creates UTC midnight which can shift the day in local time)
+  const startYear = startDate.getFullYear()
+  const startMonth = startDate.getMonth()
+  const startDay = startDate.getDate()
+
+  const endYear = endDate.getFullYear()
+  const endMonth = endDate.getMonth()
+  const endDay = endDate.getDate()
+
+  let totalMonths = (endYear - startYear) * 12 + (endMonth - startMonth)
+
   // Si no ha completado el mes actual, restamos uno
-  if (days < 0) {
+  if (endDay < startDay) {
     totalMonths--
   }
-  
+
   return Math.max(0, totalMonths)
 }
 
