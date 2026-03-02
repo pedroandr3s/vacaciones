@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { deleteField } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -153,8 +154,8 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           contractType: formData.contractType,
           status: "activo",
           mustChangePassword: true,
-          statusReason: undefined,
-          statusEndDate: undefined,
+          statusReason: deleteField(),
+          statusEndDate: deleteField(),
           updatedAt: now,
         })
 
@@ -165,7 +166,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           startDate: formData.hireDate,
           status: "activo",
           position: formData.position,
-          initialBalance: formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : undefined,
+          ...(formData.initialBalance.trim() !== "" ? { initialBalance: parseFloat(formData.initialBalance) } : {}),
           createdAt: now,
           updatedAt: now,
         }
@@ -268,7 +269,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           startDate: formData.hireDate,
           status: "activo",
           position: formData.position,
-          initialBalance: formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : undefined,
+          ...(formData.initialBalance.trim() !== "" ? { initialBalance: parseFloat(formData.initialBalance) } : {}),
           createdAt: now,
           updatedAt: now,
         }
