@@ -8,7 +8,7 @@ import {
   query,
   where,
 } from "firebase/firestore"
-import { db } from "./firebase"
+import { getDb } from "./firebase"
 import type {
   Employee,
   VacationBalance,
@@ -48,103 +48,103 @@ const CONTRACTS = "contracts"
 // ---- Employees ----
 
 export async function fetchEmployees(): Promise<Employee[]> {
-  const snapshot = await getDocs(collection(db, EMPLOYEES))
+  const snapshot = await getDocs(collection(getDb(), EMPLOYEES))
   return snapshot.docs.map((d) => d.data() as Employee)
 }
 
 export async function createEmployee(employee: Employee): Promise<void> {
-  await withRetry(() => setDoc(doc(db, EMPLOYEES, employee.id), employee))
+  await withRetry(() => setDoc(doc(getDb(), EMPLOYEES, employee.id), employee))
 }
 
 export async function updateEmployee(
   id: string,
   updates: Partial<Employee>
 ): Promise<void> {
-  await withRetry(() => updateDoc(doc(db, EMPLOYEES, id), updates))
+  await withRetry(() => updateDoc(doc(getDb(), EMPLOYEES, id), updates))
 }
 
 // ---- Vacation Balances ----
 
 export async function fetchVacationBalances(): Promise<VacationBalance[]> {
-  const snapshot = await getDocs(collection(db, VACATION_BALANCES))
+  const snapshot = await getDocs(collection(getDb(), VACATION_BALANCES))
   return snapshot.docs.map((d) => d.data() as VacationBalance)
 }
 
 export async function createVacationBalance(
   balance: VacationBalance
 ): Promise<void> {
-  await withRetry(() => setDoc(doc(db, VACATION_BALANCES, balance.id), balance))
+  await withRetry(() => setDoc(doc(getDb(), VACATION_BALANCES, balance.id), balance))
 }
 
 export async function updateVacationBalance(
   id: string,
   updates: Partial<VacationBalance>
 ): Promise<void> {
-  await withRetry(() => updateDoc(doc(db, VACATION_BALANCES, id), updates))
+  await withRetry(() => updateDoc(doc(getDb(), VACATION_BALANCES, id), updates))
 }
 
 // ---- Vacation Requests ----
 
 export async function fetchVacationRequests(): Promise<VacationRequest[]> {
-  const snapshot = await getDocs(collection(db, VACATION_REQUESTS))
+  const snapshot = await getDocs(collection(getDb(), VACATION_REQUESTS))
   return snapshot.docs.map((d) => d.data() as VacationRequest)
 }
 
 export async function createVacationRequest(
   request: VacationRequest
 ): Promise<void> {
-  await withRetry(() => setDoc(doc(db, VACATION_REQUESTS, request.id), request))
+  await withRetry(() => setDoc(doc(getDb(), VACATION_REQUESTS, request.id), request))
 }
 
 export async function updateVacationRequest(
   id: string,
   updates: Partial<VacationRequest>
 ): Promise<void> {
-  await withRetry(() => updateDoc(doc(db, VACATION_REQUESTS, id), updates))
+  await withRetry(() => updateDoc(doc(getDb(), VACATION_REQUESTS, id), updates))
 }
 
 export async function deleteVacationRequest(id: string): Promise<void> {
-  await deleteDoc(doc(db, VACATION_REQUESTS, id))
+  await deleteDoc(doc(getDb(), VACATION_REQUESTS, id))
 }
 
 // ---- Holidays ----
 
 export async function fetchHolidays(): Promise<Holiday[]> {
-  const snapshot = await getDocs(collection(db, HOLIDAYS))
+  const snapshot = await getDocs(collection(getDb(), HOLIDAYS))
   return snapshot.docs.map((d) => d.data() as Holiday)
 }
 
 export async function createHoliday(holiday: Holiday): Promise<void> {
-  await withRetry(() => setDoc(doc(db, HOLIDAYS, holiday.id), holiday))
+  await withRetry(() => setDoc(doc(getDb(), HOLIDAYS, holiday.id), holiday))
 }
 
 export async function firebaseUpdateHoliday(
   id: string,
   updates: Partial<Holiday>
 ): Promise<void> {
-  await withRetry(() => updateDoc(doc(db, HOLIDAYS, id), updates))
+  await withRetry(() => updateDoc(doc(getDb(), HOLIDAYS, id), updates))
 }
 
 export async function firebaseDeleteHoliday(id: string): Promise<void> {
-  await withRetry(() => deleteDoc(doc(db, HOLIDAYS, id)))
+  await withRetry(() => deleteDoc(doc(getDb(), HOLIDAYS, id)))
 }
 
 // ---- Contracts ----
 
 export async function fetchContracts(): Promise<Contract[]> {
-  const snapshot = await getDocs(collection(db, CONTRACTS))
+  const snapshot = await getDocs(collection(getDb(), CONTRACTS))
   return snapshot.docs.map((d) => d.data() as Contract)
 }
 
 export async function createContract(contract: Contract): Promise<void> {
-  await withRetry(() => setDoc(doc(db, CONTRACTS, contract.id), contract))
+  await withRetry(() => setDoc(doc(getDb(), CONTRACTS, contract.id), contract))
 }
 
 export async function updateContract(
   id: string,
   updates: Partial<Contract>
 ): Promise<void> {
-  await withRetry(() => updateDoc(doc(db, CONTRACTS, id), updates))
+  await withRetry(() => updateDoc(doc(getDb(), CONTRACTS, id), updates))
 }
 
 // ---- Delete employee and all associated data ----
@@ -152,7 +152,7 @@ export async function updateContract(
 export async function deleteEmployeeData(employeeId: string): Promise<void> {
   // Delete vacation balances
   const balSnap = await getDocs(
-    query(collection(db, VACATION_BALANCES), where("employeeId", "==", employeeId))
+    query(collection(getDb(), VACATION_BALANCES), where("employeeId", "==", employeeId))
   )
   for (const d of balSnap.docs) {
     await deleteDoc(d.ref)
@@ -160,7 +160,7 @@ export async function deleteEmployeeData(employeeId: string): Promise<void> {
 
   // Delete vacation requests
   const reqSnap = await getDocs(
-    query(collection(db, VACATION_REQUESTS), where("employeeId", "==", employeeId))
+    query(collection(getDb(), VACATION_REQUESTS), where("employeeId", "==", employeeId))
   )
   for (const d of reqSnap.docs) {
     await deleteDoc(d.ref)
@@ -168,18 +168,18 @@ export async function deleteEmployeeData(employeeId: string): Promise<void> {
 
   // Delete contracts
   const conSnap = await getDocs(
-    query(collection(db, CONTRACTS), where("collaboratorId", "==", employeeId))
+    query(collection(getDb(), CONTRACTS), where("collaboratorId", "==", employeeId))
   )
   for (const d of conSnap.docs) {
     await deleteDoc(d.ref)
   }
 
   // Delete the employee document
-  await deleteDoc(doc(db, EMPLOYEES, employeeId))
+  await deleteDoc(doc(getDb(), EMPLOYEES, employeeId))
 }
 
 // ---- Utility: generate Firestore doc ID ----
 
 export function generateId(collectionName: string): string {
-  return doc(collection(db, collectionName)).id
+  return doc(collection(getDb(), collectionName)).id
 }

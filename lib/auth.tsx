@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth"
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore"
-import { auth, db } from "./firebase"
+import { getAuthInstance, getDb } from "./firebase"
 import type { Employee } from "./types"
 
 type AuthContextType = {
@@ -28,14 +28,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(getAuthInstance(), async (firebaseUser) => {
       if (firebaseUser && firebaseUser.email) {
         // Retry up to 2 times on transient network errors
         let lastErr: unknown
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
             const q = query(
-              collection(db, "employees"),
+              collection(getDb(), "employees"),
               where("email", "==", firebaseUser.email)
             )
             const snapshot = await getDocs(q)
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      await signInWithEmailAndPassword(getAuthInstance(), email, password)
       return true
     } catch {
       return false
@@ -82,14 +82,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const changePassword = async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const firebaseUser = auth.currentUser
+      const firebaseUser = getAuthInstance().currentUser
       if (!firebaseUser) return { success: false, error: "No hay sesión activa." }
 
       await updatePassword(firebaseUser, newPassword)
 
       // Mark password as changed in Firestore
       if (user) {
-        const empRef = doc(db, "employees", user.id)
+        const empRef = doc(getDb(), "employees", user.id)
         await updateDoc(empRef, { mustChangePassword: false, updatedAt: new Date().toISOString() })
         setUser({ ...user, mustChangePassword: false })
         setMustChangePassword(false)
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
-    signOut(auth)
+    signOut(getAuthInstance())
     setUser(null)
     setMustChangePassword(false)
   }

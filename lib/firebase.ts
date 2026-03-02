@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app"
+import { initializeApp, getApps, getApp } from "firebase/app"
 import { getFirestore, type Firestore } from "firebase/firestore"
 import {
   initializeAuth,
@@ -18,53 +18,33 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-// Lazy singletons - avoid initializing during SSR build
-let _app: FirebaseApp | null = null
+// Lazy singletons – nothing runs at module-evaluation time
 let _db: Firestore | null = null
 let _auth: Auth | null = null
 let _storage: FirebaseStorage | null = null
 
-function getFirebaseApp(): FirebaseApp {
-  if (!_app) {
-    _app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
-  }
-  return _app
+function getFirebaseApp() {
+  return getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 }
 
-// Guard: skip Firebase client SDK init on server/build
-function serverGuard(name: string): never {
-  throw new Error(
-    `Firebase client SDK (${name}) is not available on the server. ` +
-      `Use firebase-admin for server-side operations.`
-  )
+export function getDb(): Firestore {
+  if (!_db) _db = getFirestore(getFirebaseApp())
+  return _db
 }
 
-export const db: Firestore = new Proxy({} as Firestore, {
-  get(target, prop) {
-    if (typeof window === "undefined") return undefined
-    if (!_db) _db = getFirestore(getFirebaseApp())
-    return (_db as unknown as Record<string | symbol, unknown>)[prop]
-  },
-})
-
-export const auth: Auth = new Proxy({} as Auth, {
-  get(target, prop) {
-    if (typeof window === "undefined") return undefined
-    if (!_auth) {
-      const app = getFirebaseApp()
-      const isNew = getApps().length <= 1
-      _auth = isNew
+export function getAuthInstance(): Auth {
+  if (!_auth) {
+    const app = getFirebaseApp()
+    const isNew = getApps().length <= 1
+    _auth =
+      isNew && typeof window !== "undefined"
         ? initializeAuth(app, { persistence: browserLocalPersistence })
         : getAuth(app)
-    }
-    return (_auth as unknown as Record<string | symbol, unknown>)[prop]
-  },
-})
+  }
+  return _auth
+}
 
-export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
-  get(target, prop) {
-    if (typeof window === "undefined") return undefined
-    if (!_storage) _storage = getStorage(getFirebaseApp())
-    return (_storage as unknown as Record<string | symbol, unknown>)[prop]
-  },
-})
+export function getStorageInstance(): FirebaseStorage {
+  if (!_storage) _storage = getStorage(getFirebaseApp())
+  return _storage
+}
