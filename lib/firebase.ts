@@ -31,30 +31,39 @@ function getFirebaseApp(): FirebaseApp {
   return _app
 }
 
+// Guard: skip Firebase client SDK init on server/build
+function serverGuard(name: string): never {
+  throw new Error(
+    `Firebase client SDK (${name}) is not available on the server. ` +
+      `Use firebase-admin for server-side operations.`
+  )
+}
+
 export const db: Firestore = new Proxy({} as Firestore, {
-  get(_, prop) {
+  get(target, prop) {
+    if (typeof window === "undefined") return undefined
     if (!_db) _db = getFirestore(getFirebaseApp())
     return (_db as unknown as Record<string | symbol, unknown>)[prop]
   },
 })
 
 export const auth: Auth = new Proxy({} as Auth, {
-  get(_, prop) {
+  get(target, prop) {
+    if (typeof window === "undefined") return undefined
     if (!_auth) {
       const app = getFirebaseApp()
-      const isBrowser = typeof window !== "undefined"
       const isNew = getApps().length <= 1
-      _auth =
-        isNew && isBrowser
-          ? initializeAuth(app, { persistence: browserLocalPersistence })
-          : getAuth(app)
+      _auth = isNew
+        ? initializeAuth(app, { persistence: browserLocalPersistence })
+        : getAuth(app)
     }
     return (_auth as unknown as Record<string | symbol, unknown>)[prop]
   },
 })
 
 export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
-  get(_, prop) {
+  get(target, prop) {
+    if (typeof window === "undefined") return undefined
     if (!_storage) _storage = getStorage(getFirebaseApp())
     return (_storage as unknown as Record<string | symbol, unknown>)[prop]
   },
