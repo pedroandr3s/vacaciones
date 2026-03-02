@@ -22,12 +22,11 @@ const app = isNewApp ? initializeApp(firebaseConfig) : getApp()
 
 export const db = getFirestore(app)
 
-// Use initializeAuth on first load to control persistence and avoid the
-// aggressive token-refresh network call that getAuth() triggers immediately.
-// On subsequent imports (HMR, etc.) the auth instance already exists so we
-// fall back to getAuth() to avoid the "already initialized" error.
-export const auth = isNewApp
-  ? initializeAuth(app, { persistence: browserLocalPersistence })
-  : getAuth(app)
+// On server (build/SSR) use getAuth; on client use initializeAuth with persistence
+const isBrowser = typeof window !== "undefined"
+export const auth =
+  isNewApp && isBrowser
+    ? initializeAuth(app, { persistence: browserLocalPersistence })
+    : getAuth(app)
 
 export const storage = getStorage(app)
