@@ -42,6 +42,7 @@ export type VacationRequest = {
   naitusDaysUsed: number // Dias Naitus usados en esta solicitud
   debtDaysUsed: number
   status: "pending" | "approved" | "rejected" | "cancelled"
+  calendarEventId?: string // ID del evento creado en Google Calendar (via n8n)
   notes?: string
   reason?: string // Motivo del permiso (obligatorio para permisos sin goce)
   attachmentName?: string // Nombre del documento adjunto

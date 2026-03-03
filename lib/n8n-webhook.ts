@@ -49,6 +49,14 @@ export interface N8nVacationPayload {
 export interface N8nWebhookResult {
   success: boolean
   message: string
+  calendarEventId?: string // ID del evento creado en Google Calendar
+}
+
+export interface N8nDeleteCalendarPayload {
+  calendarEventId?: string // Si se conoce, eliminar por ID directo
+  employeeName: string     // Fallback: buscar por nombre + fechas
+  startDate: string        // YYYY-MM-DD
+  endDate: string          // YYYY-MM-DD
 }
 
 /**
@@ -74,9 +82,50 @@ export async function sendVacationToN8n(
       }
     }
 
-    return { success: true, message: "Datos enviados a n8n correctamente" }
+    // Extraer calendarEventId si n8n lo retornó
+    const calendarEventId: string | undefined =
+      data.n8nResponse?.calendarEventId || undefined
+
+    return {
+      success: true,
+      message: "Datos enviados a n8n correctamente",
+      calendarEventId,
+    }
   } catch (error) {
     console.error("Error al enviar a n8n:", error)
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error de conexion",
+    }
+  }
+}
+
+/**
+ * Solicita a n8n que elimine el evento de Google Calendar asociado a una vacación.
+ * Se llama cuando el admin elimina una solicitud aprobada.
+ */
+export async function deleteVacationCalendar(
+  payload: N8nDeleteCalendarPayload,
+): Promise<N8nWebhookResult> {
+  try {
+    const response = await fetch("/api/webhook/delete-vacation-event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.error || `Error del servidor: ${response.status}`,
+      }
+    }
+
+    return { success: true, message: "Evento eliminado de Google Calendar" }
+  } catch (error) {
+    console.error("Error al eliminar evento de calendario:", error)
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error de conexion",
