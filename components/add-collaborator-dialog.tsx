@@ -26,7 +26,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
-import { UserPlus, AlertTriangle, RefreshCw, Loader2 } from "lucide-react"
+import { UserPlus, AlertTriangle, RefreshCw, Loader2, UserX } from "lucide-react"
 import { useData } from "@/contexts/data-context"
 import { generateId } from "@/lib/firebase-services"
 import { saveCredentialsToSheet, generateProvisionalPassword } from "@/lib/google-sheets"
@@ -66,6 +66,9 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
   const [existingCollaborator, setExistingCollaborator] = useState<Employee | null>(null)
   const [showRehirePrompt, setShowRehirePrompt] = useState(false)
   const [isCreatingRehire, setIsCreatingRehire] = useState(false)
+  const [emailConflictEmployee, setEmailConflictEmployee] = useState<Employee | null>(null)
+  const [showEmailConflictPrompt, setShowEmailConflictPrompt] = useState(false)
+  const [isCreatingNewWithSameEmail, setIsCreatingNewWithSameEmail] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
 
@@ -95,6 +98,31 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
       setShowRehirePrompt(false)
     }
   }, [formData.rut, idMinLength])
+
+  // Verificar si el correo ya pertenece a un colaborador existente
+  useEffect(() => {
+    const emailLower = formData.email.trim().toLowerCase()
+    if (emailLower.length === 0 || isCreatingRehire) {
+      setEmailConflictEmployee(null)
+      setShowEmailConflictPrompt(false)
+      setIsCreatingNewWithSameEmail(false)
+      return
+    }
+    // Excluir al colaborador ya encontrado por RUT (rehire) para evitar doble alerta
+    const conflict = employees.find(
+      (e) => e.email.toLowerCase() === emailLower && e.id !== existingCollaborator?.id
+    )
+    if (conflict) {
+      setEmailConflictEmployee(conflict)
+      if (conflict.status === "inactivo") {
+        setShowEmailConflictPrompt(true)
+      }
+    } else {
+      setEmailConflictEmployee(null)
+      setShowEmailConflictPrompt(false)
+      setIsCreatingNewWithSameEmail(false)
+    }
+  }, [formData.email, employees, existingCollaborator?.id, isCreatingRehire])
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -135,6 +163,11 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
         email: existingCollaborator.email,
       }))
     }
+  }
+
+  const handleConfirmNewUserSameEmail = () => {
+    setIsCreatingNewWithSameEmail(true)
+    setShowEmailConflictPrompt(false)
   }
 
   const handleSubmit = async () => {
@@ -230,10 +263,15 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
         }
       } else {
         // 1. Create Firebase Auth user via server-side API
+        // forceRecreate=true deletes the old Auth account when reusing an inactive employee's email
         const authResponse = await fetch("/api/create-user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: formData.email, password: provisionalPassword }),
+          body: JSON.stringify({
+            email: formData.email,
+            password: provisionalPassword,
+            ...(isCreatingNewWithSameEmail ? { forceRecreate: true } : {}),
+          }),
         })
         const authResult = await authResponse.json()
 
@@ -330,6 +368,9 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
       setExistingCollaborator(null)
       setShowRehirePrompt(false)
       setIsCreatingRehire(false)
+      setEmailConflictEmployee(null)
+      setShowEmailConflictPrompt(false)
+      setIsCreatingNewWithSameEmail(false)
       setSubmitError("")
       setOpen(false)
       onCollaboratorAdded?.()
@@ -346,6 +387,9 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
     setExistingCollaborator(null)
     setShowRehirePrompt(false)
     setIsCreatingRehire(false)
+    setEmailConflictEmployee(null)
+    setShowEmailConflictPrompt(false)
+    setIsCreatingNewWithSameEmail(false)
     setSubmitError("")
     setOpen(false)
   }
@@ -354,7 +398,8 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
     formData.fullName.trim() !== "" &&
     formData.email.trim() !== "" &&
     formData.hireDate !== "" &&
-    (!existingCollaborator || existingCollaborator.status === "inactivo")
+    (!existingCollaborator || existingCollaborator.status === "inactivo") &&
+    (!emailConflictEmployee || (emailConflictEmployee.status === "inactivo" && isCreatingNewWithSameEmail))
 
   const handleRutChange = (value: string) => {
     handleIdChange(value)
@@ -411,13 +456,56 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
                   está <strong>Inactivo</strong>.
                 </p>
                 <p className="mb-3 text-sm">
-                  Motivo: {existingCollaborator.statusReason || "No especificado"} 
+                  Motivo: {existingCollaborator.statusReason || "No especificado"}
                   {existingCollaborator.statusEndDate && ` (${new Date(existingCollaborator.statusEndDate).toLocaleDateString("es-CL")})`}
                 </p>
                 <Button size="sm" variant="outline" className="bg-white" onClick={handleCreateRehire}>
                   <RefreshCw className="h-3 w-3 mr-1" />
                   Crear nuevo periodo de contrato
                 </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Email conflict: correo en uso por colaborador activo */}
+          {emailConflictEmployee && emailConflictEmployee.status === "activo" && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Correo ya registrado</AlertTitle>
+              <AlertDescription>
+                Este correo pertenece a <strong>{emailConflictEmployee.fullName}</strong>, quien tiene un contrato activo.
+                No es posible usarlo para un nuevo colaborador.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Email conflict: correo en uso por colaborador inactivo → nuevo usuario */}
+          {showEmailConflictPrompt && emailConflictEmployee && emailConflictEmployee.status === "inactivo" && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <UserX className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-800">Correo pertenece a un colaborador inactivo</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                <p className="mb-2">
+                  Este correo fue usado por <strong>{emailConflictEmployee.fullName}</strong>, cuyo contrato está
+                  inactivo. El historial anterior se conservará.
+                </p>
+                <p className="mb-3 text-sm">
+                  Al confirmar, se creará un usuario nuevo con este correo y un ID diferente.
+                </p>
+                <Button size="sm" variant="outline" className="bg-white" onClick={handleConfirmNewUserSameEmail}>
+                  <UserPlus className="h-3 w-3 mr-1" />
+                  Crear nuevo usuario con este correo
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Confirmación: nuevo usuario con correo reciclado */}
+          {isCreatingNewWithSameEmail && emailConflictEmployee && (
+            <Alert className="bg-green-50 border-green-200">
+              <AlertDescription className="text-green-700 text-sm">
+                Se creará un usuario nuevo con el correo de <strong>{emailConflictEmployee.fullName}</strong>.
+                El historial anterior permanece intacto.
               </AlertDescription>
             </Alert>
           )}
