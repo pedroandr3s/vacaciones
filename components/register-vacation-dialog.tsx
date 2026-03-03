@@ -63,7 +63,7 @@ export function RegisterVacationDialog({
   triggerButton = true
 }: Props) {
   const [internalOpen, setInternalOpen] = useState(false)
-  const { employees, balances, requests: allRequests, holidays, addRequest, updateBalance } = useData()
+  const { employees, balances, requests: allRequests, holidays, addRequest, updateBalance, updateRequest } = useData()
   
   // Use controlled or uncontrolled state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
@@ -287,6 +287,13 @@ export function RegisterVacationDialog({
 
     // Send to n8n webhook via server-side proxy (best-effort, vacation already registered)
     const result = await sendVacationToN8n(payload)
+
+    // Si n8n devolvió el ID del evento de calendario, guardarlo en Firestore
+    if (result.calendarEventId) {
+      updateRequest(newRequest.id, { calendarEventId: result.calendarEventId }).catch((err) =>
+        console.warn("[RegisterVacation] No se pudo guardar calendarEventId:", err)
+      )
+    }
 
     if (result.success) {
       setWebhookStatus("success")

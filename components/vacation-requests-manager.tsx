@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import type { VacationRequest } from "@/lib/types"
 import { useData } from "@/contexts/data-context"
-import { sendVacationToN8n, type N8nVacationPayload } from "@/lib/n8n-webhook"
+import { sendVacationToN8n, deleteVacationCalendar, type N8nVacationPayload } from "@/lib/n8n-webhook"
 import { getTotalAvailable } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -132,9 +132,18 @@ export function VacationRequestsManager() {
     // Send to n8n (best-effort)
     const result = await sendVacationToN8n(payload)
 
+    // Si n8n devolvió el ID del evento de calendario, guardarlo en Firestore
+    if (result.calendarEventId) {
+      try {
+        await updateRequest(requestId, { calendarEventId: result.calendarEventId })
+      } catch (err) {
+        console.warn("[handleApprove] No se pudo guardar calendarEventId:", err)
+      }
+    }
+
     if (result.success) {
       setActionResult("✓ Solicitud aprobada correctamente. Evento registrado en Google Calendar y notificacion enviada al colaborador.")
-      
+
       // Show success toast
       toast({
         title: "Solicitud aprobada correctamente",
@@ -143,7 +152,7 @@ export function VacationRequestsManager() {
       })
     } else {
       setActionResult(`✓ Solicitud aprobada correctamente. Nota: ${result.message}`)
-      
+
       // Show partial success toast
       toast({
         title: "Solicitud aprobada",
@@ -151,7 +160,7 @@ export function VacationRequestsManager() {
         variant: "default",
       })
     }
-    
+
     setTimeout(() => setActionResult(null), 5000)
   }
 
@@ -179,6 +188,8 @@ export function VacationRequestsManager() {
     const request = requests.find((r) => r.id === requestId)
     if (!request) return
 
+    const employee = employees.find((e) => e.id === request.employeeId)
+
     // If approved, revert balance changes
     if (request.status === "approved") {
       const balance = balances.find((b) => b.employeeId === request.employeeId)
@@ -194,6 +205,18 @@ export function VacationRequestsManager() {
           balanceUpdates.debtDays = (balance.debtDays || 0) + request.debtDaysUsed
         }
         await updateBalance(balance.id, balanceUpdates as Partial<typeof balance>)
+      }
+
+      // Eliminar el evento de Google Calendar (best-effort)
+      if (employee) {
+        deleteVacationCalendar({
+          calendarEventId: request.calendarEventId,
+          employeeName: employee.fullName,
+          startDate: request.startDate,
+          endDate: request.endDate,
+        }).catch((err) =>
+          console.warn("[handleDeleteRequest] No se pudo eliminar evento de calendario:", err)
+        )
       }
     }
 
