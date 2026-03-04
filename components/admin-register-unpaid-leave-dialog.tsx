@@ -159,17 +159,17 @@ export function AdminRegisterUnpaidLeaveDialog({
 
     // Validate no overlap with existing approved requests
     const overlapCheck = hasOverlappingRequests(
-      new Date(startDate),
-      new Date(endDate),
+      parseLocalDate(startDate),
+      parseLocalDate(endDate),
       employeeRequests
     )
 
     if (overlapCheck.overlaps && overlapCheck.conflictingRequest) {
       const conflicting = overlapCheck.conflictingRequest
-      const conflictStart = new Date(
+      const conflictStart = parseLocalDate(
         conflicting.startDate
       ).toLocaleDateString("es-CL")
-      const conflictEnd = new Date(conflicting.endDate).toLocaleDateString(
+      const conflictEnd = parseLocalDate(conflicting.endDate).toLocaleDateString(
         "es-CL"
       )
       const conflictType =

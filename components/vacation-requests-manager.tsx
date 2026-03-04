@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Check, X, Calendar, Filter, Paperclip, Trash2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { getAbsenceTypeLabel } from "@/lib/utils"
+import { getAbsenceTypeLabel, parseLocalDate } from "@/lib/utils"
 import { hasOverlappingRequests } from "@/lib/utils" // Declare the variable before using it
 import { useToast } from "@/hooks/use-toast"
 
@@ -34,8 +34,8 @@ export function VacationRequestsManager() {
     // Check for overlapping approved vacations before approving
     const employeeRequests = requests.filter((r) => r.employeeId === request.employeeId)
     const overlapCheck = hasOverlappingRequests(
-      new Date(request.startDate),
-      new Date(request.endDate),
+      parseLocalDate(request.startDate),
+      parseLocalDate(request.endDate),
       employeeRequests,
       requestId, // Exclude the current request being approved
       false // Only check approved requests, not pending
@@ -458,12 +458,12 @@ export function VacationRequestsManager() {
                       <TableCell className="text-sm">
                         <div>
                           <p className="font-medium">
-                            {new Date(request.startDate).toLocaleDateString("es-CL", { day: "2-digit", month: "short" })}
+                            {parseLocalDate(request.startDate).toLocaleDateString("es-CL", { day: "2-digit", month: "short" })}
                             {" - "}
-                            {new Date(request.endDate).toLocaleDateString("es-CL", { day: "2-digit", month: "short" })}
+                            {parseLocalDate(request.endDate).toLocaleDateString("es-CL", { day: "2-digit", month: "short" })}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {new Date(request.startDate).getFullYear()}
+                            {parseLocalDate(request.startDate).getFullYear()}
                           </p>
                         </div>
                       </TableCell>

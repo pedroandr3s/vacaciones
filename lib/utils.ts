@@ -364,10 +364,8 @@ export function hasOverlappingRequests(
   })
 
   for (const request of activeRequests) {
-    const reqStart = new Date(request.startDate)
-    const reqEnd = new Date(request.endDate)
-    reqStart.setHours(0, 0, 0, 0)
-    reqEnd.setHours(0, 0, 0, 0)
+    const reqStart = parseLocalDate(request.startDate)
+    const reqEnd = parseLocalDate(request.endDate)
 
     const newStart = new Date(startDate)
     const newEnd = new Date(endDate)

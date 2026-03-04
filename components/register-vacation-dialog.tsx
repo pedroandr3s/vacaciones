@@ -162,6 +162,7 @@ export function RegisterVacationDialog({
 
   const handleSubmit = async () => {
     if (!selectedEmployee || !startDate || !endDate || businessDays === 0 || !currentBalance || !simulation) return
+    if (isSubmitting) return
 
     // Security check: verify collaborator has an active contract
     const employeeFromDB = employees.find((e) => e.id === selectedEmployeeId)
