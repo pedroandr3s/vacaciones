@@ -56,26 +56,64 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const handleFileUpload = async (contractId: string, file: File) => {
-    if (file.size > 900_000) {
-      alert("El archivo es demasiado grande. Máximo 900KB.")
+    if (file.size > 10_000_000) {
+      alert("El archivo es demasiado grande. Máximo 10MB.")
       return
     }
     setUploadingContractId(contractId)
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
+        reader.onload = () => {
+          const result = reader.result as string
+          // Extraer solo la parte base64 sin el prefijo data:...
+          const base64Only = result.split(",")[1] || result
+          resolve(base64Only)
+        }
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
+
+      const employeeName = employee?.fullName || "Sin nombre"
+      const payload = {
+        fileName: file.name,
+        fileBase64: base64,
+        employeeName,
+        contractId,
+        rut: employee?.rut || "",
+      }
+
+      const res = await fetch("/api/webhook/anexo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const result = await res.json()
+
+      if (!result.success) {
+        alert(result.message || "Error al enviar el archivo.")
+        return
+      }
+
+      // n8n devuelve un array, extraer el primer elemento
+      const raw = result.data
+      const driveData = Array.isArray(raw) ? raw[0] : raw
+      const driveFileId = driveData?.fileId || driveData?.id || ""
+      const driveUrl = driveData?.fileUrl || driveData?.webViewLink || ""
+
+      if (!driveUrl) {
+        alert("No se recibió la URL de Google Drive. El archivo no fue guardado.")
+        return
+      }
 
       const fileId = `${contractId}_${Date.now()}`
       const contract = contracts.find((c) => c.id === contractId)
       const existingFiles: ContractFile[] = contract?.files || []
       const newFile: ContractFile = {
         name: file.name,
-        url: base64,
+        url: driveUrl,
         path: fileId,
+        driveFileId,
         uploadedAt: new Date().toISOString(),
       }
 
@@ -85,6 +123,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
       })
     } catch (err) {
       console.error("Error uploading file:", err)
+      alert("Error al subir el archivo. Intente nuevamente.")
     } finally {
       setUploadingContractId(null)
     }

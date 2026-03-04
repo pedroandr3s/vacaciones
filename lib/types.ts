@@ -73,8 +73,9 @@ export type Holiday = {
 // Tipos para Gestión de Contratos (Reingresos)
 export type ContractFile = {
   name: string // Nombre original del archivo
-  url: string // data:application/pdf;base64,... stored in Firestore
+  url: string // URL de Google Drive para descargar
   path: string // Unique file identifier
+  driveFileId?: string // ID del archivo en Google Drive
   uploadedAt: string
 }
 

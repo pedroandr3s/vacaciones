@@ -1,0 +1,130 @@
+{
+  "name": "Anexo PDF → Google Drive",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "anexo",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-anexo",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "anexo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst base64 = body.fileBase64;\nconst fileName = body.fileName;\nconst employeeName = body.employeeName;\nconst contractId = body.contractId;\nconst rut = body.rut;\n\n// Convertir base64 a buffer binario\nconst buffer = Buffer.from(base64, 'base64');\n\nreturn [{\n  json: {\n    fileName,\n    employeeName,\n    contractId,\n    rut,\n  },\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/pdf',\n      fileName: fileName,\n    }\n  }\n}];"
+      },
+      "id": "code-convert",
+      "name": "Convertir Base64 a Binario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $json.fileName }}",
+        "inputDataFieldName": "data",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "google-drive-upload",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [640, 300],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const driveFile = $input.first().json;\n\nreturn [{\n  json: {\n    success: true,\n    fileId: driveFile.id,\n    webViewLink: driveFile.webViewLink,\n    fileUrl: driveFile.webViewLink,\n    fileName: driveFile.name,\n  }\n}];"
+      },
+      "id": "code-response",
+      "name": "Formatear Respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1080, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Convertir Base64 a Binario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convertir Base64 a Binario": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
