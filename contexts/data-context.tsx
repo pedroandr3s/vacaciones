@@ -36,6 +36,7 @@ import {
   deleteEmployeeData as fsDeleteEmployeeData,
 } from "@/lib/firebase-services"
 import { useAuth } from "@/lib/auth"
+import { calculateAccruedLegalDays } from "@/lib/utils"
 
 interface DataContextType {
   // Data
@@ -99,6 +100,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
         fetchHolidays(),
         fetchContracts(),
       ])
+
+      // Sync legalDays para empleados Chile activos
+      const syncUpdates: Promise<void>[] = []
+      for (const bal of bals) {
+        const emp = emps.find((e) => e.id === bal.employeeId)
+        if (!emp || emp.status === "inactivo") continue
+        const ct = (emp.contractType || "chile") as "chile" | "contractor_extranjero"
+        if (ct === "contractor_extranjero") continue
+        const computed = calculateAccruedLegalDays(emp.hireDate, "chile")
+        if (Math.abs(computed - bal.legalDays) >= 0.01) {
+          syncUpdates.push(
+            fsUpdateBalance(bal.id, { legalDays: computed, updatedAt: new Date().toISOString() })
+          )
+          bal.legalDays = computed
+        }
+      }
+      if (syncUpdates.length > 0) {
+        await Promise.all(syncUpdates)
+      }
+
       setEmployees(emps)
       setBalances(bals)
       setRequests(reqs)

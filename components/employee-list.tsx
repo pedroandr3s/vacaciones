@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Eye, UserX, ArrowUpDown, Trash2 } from "lucide-react"
-import { isEmployeeOnVacation, getTotalAvailable, calculateSeniority, isNaitusExpired, isBenefitExpired, calculateContractorCycle, getEffectiveNaitusDays } from "@/lib/utils"
+import { isEmployeeOnVacation, getTotalAvailable, calculateSeniority, isNaitusExpired, isBenefitExpired, calculateContractorCycle, getEffectiveNaitusDays, getEffectiveLegalDays } from "@/lib/utils"
 import { EmployeeDetailSheet } from "@/components/employee-detail-sheet"
 import { AddCollaboratorDialog } from "@/components/add-collaborator-dialog"
 import {
@@ -72,8 +72,10 @@ export function EmployeeList() {
       const balB = b.balance
       const ctA = (a.contractType || "chile") as "chile" | "contractor_extranjero"
       const ctB = (b.contractType || "chile") as "chile" | "contractor_extranjero"
-      const availA = balA ? getTotalAvailable(balA.legalDays, balA.naitusDays, balA.usedDays, balA.debtDays, ctA) : 0
-      const availB = balB ? getTotalAvailable(balB.legalDays, balB.naitusDays, balB.usedDays, balB.debtDays, ctB) : 0
+      const effA = getEffectiveLegalDays(a.hireDate, ctA, balA?.legalDays || 0)
+      const effB = getEffectiveLegalDays(b.hireDate, ctB, balB?.legalDays || 0)
+      const availA = balA ? getTotalAvailable(effA, balA.naitusDays, balA.usedDays, balA.debtDays, ctA) : 0
+      const availB = balB ? getTotalAvailable(effB, balB.naitusDays, balB.usedDays, balB.debtDays, ctB) : 0
       return availB - availA
     })
 
@@ -196,9 +198,10 @@ export function EmployeeList() {
             {filteredEmployees.map((employee, index) => {
               const balance = employee.balance
               const contractType = employee.contractType || "chile"
+              const effLegal = getEffectiveLegalDays(employee.hireDate, contractType as "chile" | "contractor_extranjero", balance?.legalDays || 0)
               const totalAvailable = balance
                 ? getTotalAvailable(
-                    balance.legalDays,
+                    effLegal,
                     balance.naitusDays,
                     balance.usedDays,
                     balance.debtDays,
@@ -220,8 +223,7 @@ export function EmployeeList() {
               const isContractorType = contractType === "contractor_extranjero"
               const cycleInfo = isContractorType ? calculateContractorCycle(employee.hireDate) : null
 
-              // Display directo desde la DB (ya refleja orden de consumo)
-              const legalDisplay = (balance?.legalDays || 0) - (balance?.usedDays || 0)
+              const legalDisplay = effLegal - (balance?.usedDays || 0)
               const naitusDisplay = balance
                 ? getEffectiveNaitusDays(balance, contractType as "chile" | "contractor_extranjero")
                 : 0

@@ -29,6 +29,7 @@ import {
   getMonthsUntilBenefitExpires,
   calculateContractorCycle,
   parseLocalDate,
+  getEffectiveLegalDays,
 } from "@/lib/utils"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -226,15 +227,15 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
     ? Math.max(0, Math.ceil((contractorCycle.nextRenewalDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30)))
     : getMonthsUntilNaitusExpires()
 
-  // Display directo desde la DB:
-  // - usedDays solo cuenta consumo de dias legales
-  // - naitusDays ya esta decrementado cuando se consumen naitus
-  // - debtDays es negativo cuando hay deuda
-  const availableLegalDays = (balance?.legalDays || 0) - (balance?.usedDays || 0)
+  // Días legales calculados dinámicamente desde hireDate
+  const computedLegalDays = employee
+    ? getEffectiveLegalDays(employee.hireDate, contractType as "chile" | "contractor_extranjero", balance?.legalDays || 0)
+    : (balance?.legalDays || 0)
+  const availableLegalDays = computedLegalDays - (balance?.usedDays || 0)
   const displayNaitusDays = effectiveNaitusDays // respeta unlock/expired
 
   const totalAvailable = balance
-    ? getTotalAvailable(balance.legalDays, balance.naitusDays, balance.usedDays, balance.debtDays, contractType as "chile" | "contractor_extranjero")
+    ? getTotalAvailable(computedLegalDays, balance.naitusDays, balance.usedDays, balance.debtDays, contractType as "chile" | "contractor_extranjero")
     : 0
 
   // Validation functions
@@ -558,7 +559,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                     {/* Días Acumulados */}
                     <div className="text-center p-3 bg-slate-50 rounded-lg border">
                       <p className="text-xs text-slate-500 mb-1">Días Acumulados</p>
-                      <p className="text-2xl font-bold text-slate-800">{(balance?.legalDays || 15).toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-slate-800">{computedLegalDays.toFixed(2)}</p>
                       <p className="text-[10px] text-slate-400 mt-1">
                         {isContractor
                           ? contractorActivated ? "Por ciclo anual" : "Pendiente"

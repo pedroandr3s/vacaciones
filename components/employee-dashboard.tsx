@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { VacationRequestDialog } from "@/components/vacation-request-dialog"
 import { UnpaidLeaveDialog } from "@/components/unpaid-leave-dialog"
 import { MyVacationRequests } from "@/components/my-vacation-requests"
-import { getAbsenceTypeLabel, calculateContractorCycle } from "@/lib/utils"
+import { getAbsenceTypeLabel, calculateContractorCycle, getEffectiveLegalDays } from "@/lib/utils"
 import { useData } from "@/contexts/data-context"
 import { addMonths, format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWeekend, getDay, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
@@ -57,9 +57,11 @@ export function EmployeeDashboard() {
   // Contractors extranjeros tienen beneficios INMEDIATOS desde día 1 (sin período de espera)
   const contractorActivated = true // Siempre activado para contractors extranjeros
 
-  const legalDaysAccumulated = balance?.legalDays || (isContractor ? 15 : 15)
+  const legalDaysAccumulated = employee
+    ? getEffectiveLegalDays(employee.hireDate, contractType as "chile" | "contractor_extranjero", balance?.legalDays || 0)
+    : (balance?.legalDays || 15)
   const legalDaysUsed = balance?.usedDays || 0
-  const legalAvailable = balance ? balance.legalDays - balance.usedDays : 0
+  const legalAvailable = legalDaysAccumulated - legalDaysUsed
   // Para contractors: Naitus SIEMPRE disponibles desde día 1 (sin condición de desbloqueo)
   // Para Chile: se desbloquean al usar 15 días legales
   const naitusAvailable = balance?.naitusDays || 0
@@ -661,7 +663,7 @@ export function EmployeeDashboard() {
         employeeEmail={user?.email || ""}
         employeePosition={user?.position || ""}
         contractType={contractType as "chile" | "contractor_extranjero"}
-        legalDaysTotal={balance?.legalDays || 0}
+        legalDaysTotal={legalDaysAccumulated}
         legalUsed={balance?.usedDays || 0}
         naitusDaysTotal={balance?.naitusDays || 0}
         debtDays={balance?.debtDays || 0}

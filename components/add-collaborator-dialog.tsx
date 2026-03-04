@@ -207,13 +207,11 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
 
         // Create or update balance
         const isContractor = formData.contractType === "contractor_extranjero"
+        const accrued = isContractor ? 15 : calculateAccruedLegalDays(formData.hireDate, "chile")
         const parsedBalance = formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : null
         const hasManualBalance = parsedBalance !== null && !isNaN(parsedBalance)
-        const legalDays = hasManualBalance
-          ? parsedBalance
-          : isContractor
-            ? 15
-            : calculateAccruedLegalDays(formData.hireDate, "chile")
+        const legalDays = accrued
+        const usedDays = hasManualBalance ? Math.max(0, accrued - parsedBalance) : 0
 
         const existingBal = balances.find((b) => b.employeeId === existingCollaborator.id)
         const newBalance: VacationBalance = {
@@ -223,7 +221,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           legalDays,
           naitusDays: 5,
           debtDays: 0,
-          usedDays: 0,
+          usedDays,
           createdAt: now,
           updatedAt: now,
         }
@@ -315,13 +313,11 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
 
         // 4. Create balance
         const isContractor = formData.contractType === "contractor_extranjero"
+        const accrued = isContractor ? 15 : calculateAccruedLegalDays(formData.hireDate, "chile")
         const parsedBalance = formData.initialBalance.trim() !== "" ? parseFloat(formData.initialBalance) : null
         const hasManualBalance = parsedBalance !== null && !isNaN(parsedBalance)
-        const legalDays = hasManualBalance
-          ? parsedBalance
-          : isContractor
-            ? 15
-            : calculateAccruedLegalDays(formData.hireDate, "chile")
+        const legalDays = accrued
+        const usedDays = hasManualBalance ? Math.max(0, accrued - parsedBalance) : 0
 
         const newBalance: VacationBalance = {
           id: generateId("vacationBalances"),
@@ -330,7 +326,7 @@ export function AddCollaboratorDialog({ onCollaboratorAdded }: AddCollaboratorDi
           legalDays,
           naitusDays: 5,
           debtDays: 0,
-          usedDays: 0,
+          usedDays,
           createdAt: now,
           updatedAt: now,
         }

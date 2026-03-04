@@ -562,6 +562,19 @@ export function getMonthsBetweenDates(startDate: Date, endDate: Date): number {
 }
 
 /**
+ * Calcula los días legales acumulados en tiempo real desde hireDate.
+ * Fallback a balanceLegalDays si no hay hireDate.
+ */
+export function getEffectiveLegalDays(
+  hireDate: string | undefined,
+  contractType: "chile" | "contractor_extranjero",
+  balanceLegalDays: number
+): number {
+  if (!hireDate) return balanceLegalDays
+  return calculateAccruedLegalDays(hireDate, contractType)
+}
+
+/**
  * Obtiene el contrato activo de un colaborador
  */
 import type { Contract } from "./types"
