@@ -541,7 +541,7 @@ export function RegisterVacationDialog({
                     </div>
                   </div>
                   {simulation.legalConsumed > 0 && (
-                    <p className="text-xs text-blue-600 mt-1 ml-5">Se descontarán {simulation.legalConsumed} días de este tipo</p>
+                    <p className="text-xs text-blue-600 mt-1 ml-5">Se descontarán {simulation.legalConsumed.toFixed(2)} días de este tipo</p>
                   )}
                 </div>
 
@@ -569,7 +569,7 @@ export function RegisterVacationDialog({
                     </div>
                   </div>
                   {simulation.naitusConsumed > 0 && currentBalance.naitusUnlocked && (
-                    <p className="text-xs text-green-600 mt-1 ml-5">Se descontarán {simulation.naitusConsumed} días de este tipo</p>
+                    <p className="text-xs text-green-600 mt-1 ml-5">Se descontarán {simulation.naitusConsumed.toFixed(2)} días de este tipo</p>
                   )}
                 </div>
 
@@ -588,7 +588,7 @@ export function RegisterVacationDialog({
                       </div>
                     </div>
                     {simulation.debtConsumed > 0 && (
-                      <p className="text-xs text-red-600 mt-1 ml-5">Se generarán {simulation.debtConsumed} días de deuda</p>
+                      <p className="text-xs text-red-600 mt-1 ml-5">Se generarán {simulation.debtConsumed.toFixed(2)} días de deuda</p>
                     )}
                   </div>
                 )}
@@ -615,7 +615,7 @@ export function RegisterVacationDialog({
                   <Alert className="bg-red-100 border-red-200">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                     <AlertDescription className="text-sm text-red-700">
-                      Este registro generará <strong>{simulation.debtConsumed} días en deuda</strong> que se compensarán con futuros días acumulados.
+                      Este registro generará <strong>{simulation.debtConsumed.toFixed(2)} días en deuda</strong> que se compensarán con futuros días acumulados.
                     </AlertDescription>
                   </Alert>
                 )}
