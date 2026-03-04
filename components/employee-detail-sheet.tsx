@@ -47,7 +47,7 @@ type Props = {
 }
 
 export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRegistered }: Props) {
-  const { requests, contracts, updateEmployee, updateContract } = useData()
+  const { requests, contracts, employees, updateEmployee, updateContract } = useData()
   const [employeeStatus, setEmployeeStatus] = useState<"activo" | "inactivo">(employee?.status || "activo")
   const [registerDialogOpen, setRegisterDialogOpen] = useState(false)
   const [unpaidLeaveDialogOpen, setUnpaidLeaveDialogOpen] = useState(false)
@@ -960,6 +960,15 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
                     <Select
                       value={employeeStatus}
                       onValueChange={async (value: "activo" | "inactivo") => {
+                        if (value === "activo" && employee) {
+                          const otherActive = employees.find(
+                            (e) => e.email === employee.email && e.id !== employee.id && e.status === "activo"
+                          )
+                          if (otherActive) {
+                            alert(`No se puede reactivar: ya existe otro colaborador activo con el correo ${employee.email} (${otherActive.fullName}).`)
+                            return
+                          }
+                        }
                         setEmployeeStatus(value)
                         if (employee) {
                           await updateEmployee(employee.id, {
