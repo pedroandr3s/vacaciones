@@ -428,32 +428,32 @@ export function EmployeeDashboard() {
                     config={{
                       days: { label: "Dias disponibles", color: "#2563eb" },
                     }}
-                    className="h-[180px]"
+                    className="h-[180px] w-full"
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={projectionData} barCategoryGap="20%">
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={35} />
-                        <RechartsTooltip
-                          content={({ active, payload }) => {
-                            if (!active || !payload?.length) return null
-                            const d = payload[0]
-                            if (!d) return null
-                            return (
-                              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg text-xs">
-                                <p className="font-medium text-slate-900">{d.payload?.label}</p>
-                                <p className="text-slate-600">{Number(d.value).toFixed(2)} dias disponibles</p>
-                              </div>
-                            )
-                          }}
-                        />
-                        <Bar dataKey="days" radius={[6, 6, 0, 0]}>
-                          {projectionData.map((entry, index) => (
-                            <Cell key={`bar-${index}`} fill={entry.fill} />
-                          ))}
-                        </Bar>
-                      </BarChart>
+                    <BarChart data={projectionData} barCategoryGap="20%">
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={35} />
+                      <RechartsTooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          const d = payload[0]
+                          if (!d) return null
+                          return (
+                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg text-xs">
+                              <p className="font-medium text-slate-900">{d.payload?.label}</p>
+                              <p className="text-slate-600">{Number(d.value).toFixed(2)} dias disponibles</p>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Bar dataKey="days" radius={[6, 6, 0, 0]}>
+                        {projectionData.map((entry, index) => (
+                          <Cell key={`bar-${index}`} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
                   <p className="text-[11px] text-slate-400 mt-2">
