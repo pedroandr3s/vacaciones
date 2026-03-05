@@ -223,7 +223,7 @@ export function EmployeeList() {
               const isContractorType = contractType === "contractor_extranjero"
               const cycleInfo = isContractorType ? calculateContractorCycle(employee.hireDate) : null
 
-              const legalDisplay = effLegal - (balance?.usedDays || 0)
+              const legalDisplay = Math.max(0, effLegal - (balance?.usedDays || 0))
               const naitusDisplay = balance
                 ? getEffectiveNaitusDays(balance, contractType as "chile" | "contractor_extranjero")
                 : 0
@@ -254,11 +254,9 @@ export function EmployeeList() {
                       >
                         {isContractorType ? "Contractor en el extranjero" : "Contrato en Chile"}
                       </Badge>
-                      {isContractorType && cycleInfo && (
-                        <span className={`text-[10px] font-medium ${cycleInfo.hasCompletedFirstYear ? "text-green-600" : "text-amber-600"}`}>
-                          {cycleInfo.hasCompletedFirstYear
-                            ? `Ciclo ${cycleInfo.currentCycleNumber} activo`
-                            : `${cycleInfo.daysUntilActivation}d para activar`}
+                      {isContractorType && cycleInfo && cycleInfo.hasCompletedFirstYear && (
+                        <span className="text-[10px] font-medium text-green-600">
+                          Ciclo {cycleInfo.currentCycleNumber} activo
                         </span>
                       )}
                     </div>

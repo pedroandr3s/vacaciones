@@ -271,8 +271,8 @@ export function simulateVacationApproval(
   usedDays: number,
   requestedDays: number,
 ): BalanceSimulation {
-  // Calculate available balance
-  const availableLegal = currentLegalDays - usedDays
+  // Calculate available balance (never negative — debt is tracked separately)
+  const availableLegal = Math.max(0, currentLegalDays - usedDays)
   const availableNaitus = currentNaitusDays
   const currentDebt = currentDebtDays
 
@@ -334,8 +334,8 @@ export function getTotalAvailable(
   debtDays: number,
   contractType?: "chile" | "contractor_extranjero",
 ): number {
-  // Días legales disponibles = acumulados - tomados
-  const availableLegal = legalDays - usedDays
+  // Días legales disponibles = acumulados - tomados (nunca negativo, deuda va aparte)
+  const availableLegal = Math.max(0, legalDays - usedDays)
 
   // Días Naitus efectivos segun tipo de contrato
   const balance = { legalDays, naitusDays, debtDays, usedDays } as any

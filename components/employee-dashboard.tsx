@@ -61,7 +61,7 @@ export function EmployeeDashboard() {
     ? getEffectiveLegalDays(employee.hireDate, contractType as "chile" | "contractor_extranjero", balance?.legalDays || 0)
     : (balance?.legalDays || 15)
   const legalDaysUsed = balance?.usedDays || 0
-  const legalAvailable = legalDaysAccumulated - legalDaysUsed
+  const legalAvailable = Math.max(0, legalDaysAccumulated - legalDaysUsed)
   // Para contractors: Naitus SIEMPRE disponibles desde día 1 (sin condición de desbloqueo)
   // Para Chile: se desbloquean al usar 15 días legales
   const naitusAvailable = balance?.naitusDays || 0
@@ -445,6 +445,9 @@ export function EmployeeDashboard() {
                 </span>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}>
                   <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 ml-1 text-xs" onClick={() => setCalendarMonth(startOfMonth(new Date()))}>
+                  Hoy
                 </Button>
               </div>
             </div>

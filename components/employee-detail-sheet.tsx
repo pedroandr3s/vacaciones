@@ -231,7 +231,7 @@ export function EmployeeDetailSheet({ employee, open, onOpenChange, onVacationRe
   const computedLegalDays = employee
     ? getEffectiveLegalDays(employee.hireDate, contractType as "chile" | "contractor_extranjero", balance?.legalDays || 0)
     : (balance?.legalDays || 0)
-  const availableLegalDays = computedLegalDays - (balance?.usedDays || 0)
+  const availableLegalDays = Math.max(0, computedLegalDays - (balance?.usedDays || 0))
   const displayNaitusDays = effectiveNaitusDays // respeta unlock/expired
 
   const totalAvailable = balance

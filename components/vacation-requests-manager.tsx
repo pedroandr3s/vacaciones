@@ -468,17 +468,17 @@ export function VacationRequestsManager() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="font-bold text-slate-900">{request.totalDays}</span>
+                        <span className="font-bold text-slate-900">{request.totalDays.toFixed(2)}</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="font-medium text-blue-700">{request.legalDaysUsed}</span>
+                        <span className="font-medium text-blue-700">{request.legalDaysUsed.toFixed(2)}</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="font-medium text-green-700">{request.naitusDaysUsed}</span>
+                        <span className="font-medium text-green-700">{request.naitusDaysUsed.toFixed(2)}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         <span className={`font-medium ${request.debtDaysUsed > 0 ? "text-red-700" : "text-slate-400"}`}>
-                          {request.debtDaysUsed > 0 ? request.debtDaysUsed : "-"}
+                          {request.debtDaysUsed > 0 ? request.debtDaysUsed.toFixed(2) : "-"}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { getTotalAvailable, parseLocalDate, getEffectiveNaitusDays } from "@/lib/utils"
+import { getTotalAvailable, parseLocalDate, getEffectiveNaitusDays, getEffectiveLegalDays } from "@/lib/utils"
 import { useData } from "@/contexts/data-context"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -61,10 +61,10 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
     const balanceData = activeEmployees.map((emp) => {
       const balance = balances.find((b) => b.employeeId === emp.id)
       const ct = (emp.contractType || "chile") as "chile" | "contractor_extranjero"
-      const totalAvail = balance ? getTotalAvailable(balance.legalDays, balance.naitusDays, balance.usedDays, balance.debtDays, ct) : 0
-      const totalCapacity = (balance?.legalDays || 0) + (balance && balance.naitusDays > 0 ? balance.naitusDays : 0)
+      const legalDaysTotal = getEffectiveLegalDays(emp.hireDate, ct, balance?.legalDays || 0)
+      const totalAvail = balance ? getTotalAvailable(legalDaysTotal, balance.naitusDays, balance.usedDays, balance.debtDays, ct) : 0
+      const totalCapacity = legalDaysTotal + (balance && balance.naitusDays > 0 ? balance.naitusDays : 0)
       const usedDays = balance?.usedDays || 0
-      const legalDaysTotal = balance?.legalDays || 0
       const naitusDaysRaw = balance?.naitusDays || 0
       const availableLegal = Math.max(0, legalDaysTotal - usedDays)
       const availableNaitus = balance
@@ -135,7 +135,7 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
       totalHolidaysYear,
       remainingHolidays,
     }
-  }, [employees, balances, requests, holidays])
+  }, [employees, balances, requests, holidays, refreshKey])
 
   const getInitials = (name: string) =>
     name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
@@ -556,7 +556,7 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
                           emp.totalAvailable > 0 ? "text-amber-600" :
                           "text-red-600"
                         }`}>
-                          {emp.totalAvailable}d
+                          {emp.totalAvailable.toFixed(2)}d
                         </span>
                       </div>
                       {/* Horizontal fill bar relative to top employee */}
@@ -573,17 +573,17 @@ export function AdminDashboardOverview({ refreshKey, onNavigateTab }: AdminDashb
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] text-slate-400">
-                          {emp.availableLegal}d legales
+                          {emp.availableLegal.toFixed(2)}d legales
                         </span>
                         <span className="text-[10px] text-slate-300">|</span>
                         <span className="text-[10px] text-slate-400">
-                          {emp.availableNaitus}d Naitus
+                          {emp.availableNaitus.toFixed(2)}d Naitus
                         </span>
                         {emp.debtDays < 0 && (
                           <>
                             <span className="text-[10px] text-slate-300">|</span>
                             <span className="text-[10px] text-red-500 font-medium">
-                              {Math.abs(emp.debtDays)}d deuda
+                              {Math.abs(emp.debtDays).toFixed(2)}d deuda
                             </span>
                           </>
                         )}

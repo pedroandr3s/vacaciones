@@ -219,6 +219,8 @@ export function VacationRequestDialog({
                   onSelect={setEndDate}
                   initialFocus
                   locale={es}
+                  key={startDate?.toISOString()}
+                  defaultMonth={startDate || undefined}
                   disabled={(date) => {
                     if (!startDate) return true
                     return date < startDate

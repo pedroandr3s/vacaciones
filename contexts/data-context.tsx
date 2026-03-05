@@ -110,14 +110,50 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (ct === "contractor_extranjero") continue
         const computed = calculateAccruedLegalDays(emp.hireDate, "chile")
         if (Math.abs(computed - bal.legalDays) >= 0.01) {
-          syncUpdates.push(
-            fsUpdateBalance(bal.id, { legalDays: computed, updatedAt: new Date().toISOString() })
-          )
+          const increase = computed - bal.legalDays
+          const updates: Record<string, unknown> = {
+            legalDays: computed,
+            updatedAt: new Date().toISOString(),
+          }
+          // Si hay deuda, los nuevos días acumulados pagan la deuda primero
+          if (increase > 0 && bal.debtDays < 0) {
+            const debtPayoff = Math.min(increase, Math.abs(bal.debtDays))
+            const newDebt = bal.debtDays + debtPayoff
+            updates.debtDays = newDebt
+            updates.usedDays = bal.usedDays + debtPayoff
+            bal.debtDays = newDebt
+            bal.usedDays = bal.usedDays + debtPayoff
+          }
+          syncUpdates.push(fsUpdateBalance(bal.id, updates))
           bal.legalDays = computed
         }
       }
       if (syncUpdates.length > 0) {
         await Promise.all(syncUpdates)
+      }
+
+      // Reconciliar deuda: si un empleado tiene debtDays < 0 y legalDays - usedDays > 0,
+      // los días legales disponibles deben pagar la deuda primero
+      const debtFixes: Promise<void>[] = []
+      for (const bal of bals) {
+        if (bal.debtDays >= 0) continue
+        const surplus = bal.legalDays - bal.usedDays
+        if (surplus <= 0) continue
+        const debtPayoff = Math.min(surplus, Math.abs(bal.debtDays))
+        const newDebt = bal.debtDays + debtPayoff
+        const newUsed = bal.usedDays + debtPayoff
+        debtFixes.push(
+          fsUpdateBalance(bal.id, {
+            debtDays: newDebt,
+            usedDays: newUsed,
+            updatedAt: new Date().toISOString(),
+          })
+        )
+        bal.debtDays = newDebt
+        bal.usedDays = newUsed
+      }
+      if (debtFixes.length > 0) {
+        await Promise.all(debtFixes)
       }
 
       setEmployees(emps)
