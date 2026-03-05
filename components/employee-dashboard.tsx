@@ -846,7 +846,7 @@ export function EmployeeDashboard() {
                             }}
                           >
                             <Download className="h-3.5 w-3.5 mr-1" />
-                            Solicitar
+                            Descargar
                           </Button>
                         )}
                       </div>
@@ -856,69 +856,6 @@ export function EmployeeDashboard() {
               </CardContent>
             </Card>
 
-            {/* Contractor cycle info */}
-            {isContractor && contractorCycle && (
-              <Card className="bg-purple-50 border-purple-200">
-                <CardContent className="p-4 space-y-4">
-                  <div className="flex items-start gap-3">
-                    {contractorActivated ? (
-                      <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-green-600" />
-                    ) : (
-                      <Clock className="h-5 w-5 mt-0.5 flex-shrink-0 text-purple-600" />
-                    )}
-                    <div className="flex-1">
-                      <p className={`text-sm font-medium ${contractorActivated ? "text-green-800" : "text-purple-800"}`}>
-                        {contractorActivated
-                          ? `Licencias activas - Ciclo ${contractorCycle.currentCycleNumber}`
-                          : "Licencias pendientes de activacion"}
-                      </p>
-                      <p className={`text-xs mt-1 ${contractorActivated ? "text-green-600" : "text-purple-600"}`}>
-                        {contractorActivated
-                          ? "Tus 15 dias legales y 5 dias Naitus se renuevan en cada aniversario de tu contrato. Los dias Naitus estan siempre disponibles; el sistema descuenta primero los legales."
-                          : `Tus licencias se activaran al cumplir 1 ano desde el inicio de tu contrato. Faltan ${contractorCycle.daysUntilActivation} dias.`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-purple-600">
-                        {contractorActivated ? "Progreso del ciclo actual" : "Progreso hacia activacion"}
-                      </span>
-                      <span className="text-purple-700 font-medium">{contractorCycle.progressPercent}%</span>
-                    </div>
-                    <div className="w-full bg-purple-100 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${contractorActivated ? "bg-green-500" : "bg-purple-500"}`}
-                        style={{ width: `${contractorCycle.progressPercent}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-purple-500">
-                      <span>
-                        {contractorCycle.currentCycleStartDate.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <RefreshCw className="h-3 w-3" />
-                        Renovacion: {contractorCycle.nextRenewalDate.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {contractorActivated && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <div className="bg-white/60 rounded-lg p-2.5 text-center border border-purple-200">
-                        <p className="text-lg font-bold text-purple-800">15</p>
-                        <p className="text-[10px] text-purple-600">Dias legales por ciclo</p>
-                      </div>
-                      <div className="bg-white/60 rounded-lg p-2.5 text-center border border-purple-200">
-                        <p className="text-lg font-bold text-purple-800">5</p>
-                        <p className="text-[10px] text-purple-600">Dias Naitus por ciclo</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
         </Tabs>
       </main>

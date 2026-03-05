@@ -129,9 +129,9 @@ export function MyVacationRequests({ requests }: Props) {
                   <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
                     <Clock className="h-3 w-3" />
                     <span>
-                      {request.registeredBy === "employee"
-                        ? `Solicitado el ${new Date(request.createdAt).toLocaleDateString("es-CL")}`
-                        : "Creado por RRHH"}
+                      {request.registeredBy === "admin" || (!request.registeredBy && request.reviewedBy)
+                        ? `Gestionado por RRHH el ${new Date(request.createdAt).toLocaleDateString("es-CL")}`
+                        : `Solicitado el ${new Date(request.createdAt).toLocaleDateString("es-CL")}`}
                     </span>
                   </div>
                 </CardContent>
