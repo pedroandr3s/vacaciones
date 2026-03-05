@@ -81,21 +81,21 @@ export function MyVacationRequests({ requests }: Props) {
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Dias totales</span>
-                    <span className="font-semibold text-slate-900">{request.totalDays} dias</span>
+                    <span className="font-semibold text-slate-900">{request.totalDays.toFixed(2)} dias</span>
                   </div>
 
                   {request.absenceType === "vacacion_remunerada" ? (
                     <div className="grid grid-cols-3 gap-1 text-xs">
                       <div className="p-1.5 bg-blue-50 rounded text-center">
-                        <p className="text-blue-700 font-medium">{request.legalDaysUsed}</p>
+                        <p className="text-blue-700 font-medium">{request.legalDaysUsed.toFixed(2)}</p>
                         <p className="text-blue-600">Legal</p>
                       </div>
                       <div className="p-1.5 bg-green-50 rounded text-center">
-                        <p className="text-green-700 font-medium">{request.naitusDaysUsed}</p>
+                        <p className="text-green-700 font-medium">{request.naitusDaysUsed.toFixed(2)}</p>
                         <p className="text-green-600">Naitus</p>
                       </div>
                       <div className="p-1.5 bg-red-50 rounded text-center">
-                        <p className="text-red-700 font-medium">{request.debtDaysUsed}</p>
+                        <p className="text-red-700 font-medium">{request.debtDaysUsed.toFixed(2)}</p>
                         <p className="text-red-600">Deuda</p>
                       </div>
                     </div>
@@ -126,12 +126,14 @@ export function MyVacationRequests({ requests }: Props) {
                     </p>
                   )}
 
-                  {request.registeredBy !== "admin" && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
-                      <Clock className="h-3 w-3" />
-                      <span>Solicitado el {new Date(request.createdAt).toLocaleDateString("es-CL")}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {request.registeredBy === "employee"
+                        ? `Solicitado el ${new Date(request.createdAt).toLocaleDateString("es-CL")}`
+                        : "Creado por RRHH"}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             )

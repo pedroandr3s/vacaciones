@@ -150,10 +150,8 @@ export function EmployeeDashboard() {
     const dayStart = new Date(day)
     dayStart.setHours(0, 0, 0, 0)
     return approvedRequests.filter((r) => {
-      const start = new Date(r.startDate)
-      const end = new Date(r.endDate)
-      start.setHours(0, 0, 0, 0)
-      end.setHours(0, 0, 0, 0)
+      const start = parseLocalDate(r.startDate)
+      const end = parseLocalDate(r.endDate)
       return dayStart >= start && dayStart <= end
     })
   }
@@ -738,7 +736,7 @@ export function EmployeeDashboard() {
                     </div>
                     <div>
                       <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Correo Electronico</p>
-                      <p className="text-sm text-slate-900 mt-0.5">{employee?.email || "-"}</p>
+                      <p className="text-sm text-slate-900 mt-0.5 font-semibold">{employee?.email || "-"}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -747,7 +745,7 @@ export function EmployeeDashboard() {
                     </div>
                     <div>
                       <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Fecha de Nacimiento</p>
-                      <p className={`text-sm mt-0.5 ${employee?.birthDate ? "text-slate-900" : "text-slate-400"}`}>
+                      <p className={`text-sm mt-0.5 font-semibold ${employee?.birthDate ? "text-slate-900" : "text-slate-400"}`}>
                         {employee?.birthDate
                           ? parseLocalDate(employee.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })
                           : "No registrada"}

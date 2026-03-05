@@ -59,7 +59,7 @@ export function VacationHistorySheet({ employee, open, onOpenChange }: Props) {
                         {parseLocalDate(request.startDate).toLocaleDateString("es-CL")}
                       </TableCell>
                       <TableCell>{parseLocalDate(request.endDate).toLocaleDateString("es-CL")}</TableCell>
-                      <TableCell className="text-center font-semibold">{request.totalDays}</TableCell>
+                      <TableCell className="text-center font-semibold">{request.totalDays.toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -79,17 +79,17 @@ export function VacationHistorySheet({ employee, open, onOpenChange }: Props) {
                           <div className="flex flex-wrap gap-1">
                             {isLegal && (
                               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Legal ({request.legalDaysUsed})
+                                Legal ({request.legalDaysUsed.toFixed(2)})
                               </Badge>
                             )}
                             {isNaitus && (
                               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                Naitus ({request.naitusDaysUsed})
+                                Naitus ({request.naitusDaysUsed.toFixed(2)})
                               </Badge>
                             )}
                             {request.debtDaysUsed > 0 && (
                               <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                                Deuda ({request.debtDaysUsed})
+                                Deuda ({request.debtDaysUsed.toFixed(2)})
                               </Badge>
                             )}
                           </div>

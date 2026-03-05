@@ -239,7 +239,7 @@ export function UpcomingVacations({ refreshKey }: { refreshKey?: number }) {
                           {formatDate(entry.request.endDate)}
                         </span>
                         <span className="text-slate-400 mx-0.5">|</span>
-                        <span>{entry.request.totalDays} dias</span>
+                        <span>{entry.request.totalDays.toFixed(2)} dias</span>
                       </div>
                     </div>
 

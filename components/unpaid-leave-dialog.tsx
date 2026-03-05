@@ -138,8 +138,8 @@ export function UnpaidLeaveDialog({
       status: "pending",
       registeredBy: "employee",
       reason: reason.trim(),
-      notes: notes || undefined,
-      attachmentName: attachmentName || undefined,
+      notes: notes || "",
+      attachmentName: attachmentName || "",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -264,9 +264,11 @@ export function UnpaidLeaveDialog({
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
+                    key={startDate?.toISOString()}
                     mode="single"
                     selected={endDate}
                     onSelect={setEndDate}
+                    defaultMonth={startDate || undefined}
                     initialFocus
                     locale={es}
                     disabled={(date) => {
