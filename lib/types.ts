@@ -46,6 +46,7 @@ export type VacationRequest = {
   notes?: string
   reason?: string // Motivo del permiso (obligatorio para permisos sin goce)
   attachmentName?: string // Nombre del documento adjunto
+  registeredBy?: "admin" | "employee"
   reviewedBy?: string
   reviewedAt?: string
   createdAt: string

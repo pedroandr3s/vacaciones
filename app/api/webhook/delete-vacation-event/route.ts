@@ -8,7 +8,7 @@ import type { N8nDeleteCalendarPayload } from "@/lib/n8n-webhook"
  */
 export async function POST(request: Request) {
   try {
-    const webhookUrl = "https://naitus.app.n8n.cloud/webhook/eliminar-vacacion"
+    const webhookUrl = "https://naitus.app.n8n.cloud/webhook-test/eliminar-vacacion"
 
     const payload: N8nDeleteCalendarPayload = await request.json()
 

@@ -7,7 +7,7 @@ import type { N8nVacationPayload } from "@/lib/n8n-webhook"
  */
 export async function POST(request: Request) {
   try {
-    const webhookUrl = "https://naitus.app.n8n.cloud/webhook/vacaciones-equipo"
+    const webhookUrl = "https://naitus.app.n8n.cloud/webhook-test/vacaciones-equipo"
 
     const payload: N8nVacationPayload = await request.json()
 

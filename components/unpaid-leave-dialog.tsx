@@ -23,7 +23,7 @@ import {
 import { CalendarIcon, AlertTriangle, Paperclip, Info, X } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { cn, calculateBusinessDays, hasOverlappingRequests } from "@/lib/utils"
+import { cn, calculateBusinessDays, hasOverlappingRequests, parseLocalDate } from "@/lib/utils"
 import { useData } from "@/contexts/data-context"
 import { generateId } from "@/lib/firebase-services"
 import type { VacationRequest } from "@/lib/types"
@@ -49,6 +49,7 @@ export function UnpaidLeaveDialog({
   const [attachmentName, setAttachmentName] = useState("")
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const allRequests = existingRequests || allFirestoreRequests.filter((r) => r.employeeId === employeeId)
   const requestedDays =
@@ -98,26 +99,31 @@ export function UnpaidLeaveDialog({
       return
     }
 
-    // Validate no overlap with existing approved requests
+    // Validate no overlap with existing approved/pending requests
     const overlapCheck = hasOverlappingRequests(
       startDate,
       endDate,
-      allRequests
+      allRequests,
+      undefined,
+      true
     )
 
     if (overlapCheck.overlaps && overlapCheck.conflictingRequest) {
       const conflicting = overlapCheck.conflictingRequest
-      const conflictStart = new Date(
+      const conflictStart = parseLocalDate(
         conflicting.startDate
       ).toLocaleDateString("es-CL")
-      const conflictEnd = new Date(
+      const conflictEnd = parseLocalDate(
         conflicting.endDate
       ).toLocaleDateString("es-CL")
       setError(
-        `Las fechas se solapan con una ausencia ya aprobada (${conflictStart} - ${conflictEnd}). Seleccione fechas distintas.`
+        `Las fechas se solapan con una ausencia existente (${conflictStart} - ${conflictEnd}). Seleccione fechas distintas.`
       )
       return
     }
+
+    if (isSubmitting) return
+    setIsSubmitting(true)
 
     const newRequest: VacationRequest = {
       id: generateId("vacationRequests"),
@@ -130,6 +136,7 @@ export function UnpaidLeaveDialog({
       naitusDaysUsed: 0,
       debtDaysUsed: 0,
       status: "pending",
+      registeredBy: "employee",
       reason: reason.trim(),
       notes: notes || undefined,
       attachmentName: attachmentName || undefined,
@@ -142,10 +149,12 @@ export function UnpaidLeaveDialog({
       setSuccess(true)
       setTimeout(() => {
         setSuccess(false)
+        setIsSubmitting(false)
         onOpenChange(false)
         resetForm()
       }, 2000)
     } catch (err) {
+      setIsSubmitting(false)
       setError("Error al enviar la solicitud. Intente nuevamente.")
     }
   }
@@ -157,6 +166,7 @@ export function UnpaidLeaveDialog({
     setNotes("")
     setAttachmentName("")
     setError("")
+    setIsSubmitting(false)
   }
 
   return (
@@ -366,7 +376,7 @@ export function UnpaidLeaveDialog({
             </Button>
             <Button
               type="submit"
-              disabled={!startDate || !endDate || !reason.trim()}
+              disabled={!startDate || !endDate || !reason.trim() || isSubmitting}
               className="bg-orange-600 hover:bg-orange-700 text-white"
             >
               Solicitar Permiso

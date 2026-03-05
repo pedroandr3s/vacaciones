@@ -126,10 +126,12 @@ export function MyVacationRequests({ requests }: Props) {
                     </p>
                   )}
 
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
-                    <Clock className="h-3 w-3" />
-                    <span>Solicitado el {new Date(request.createdAt).toLocaleDateString("es-CL")}</span>
-                  </div>
+                  {request.registeredBy !== "admin" && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
+                      <Clock className="h-3 w-3" />
+                      <span>Solicitado el {new Date(request.createdAt).toLocaleDateString("es-CL")}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )

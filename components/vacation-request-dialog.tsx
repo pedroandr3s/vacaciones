@@ -119,6 +119,7 @@ export function VacationRequestDialog({
       naitusDaysUsed: naitusConsumed,
       debtDaysUsed: debtGenerated,
       status: "pending" as const,
+      registeredBy: "employee" as const,
       notes: notes || "",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
