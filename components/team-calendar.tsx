@@ -32,7 +32,9 @@ export function TeamCalendar() {
   const getFirstDayOfMonth = (date: Date) => {
     const year = date.getFullYear()
     const month = date.getMonth()
-    return new Date(year, month, 1).getDay()
+    const day = new Date(year, month, 1).getDay()
+    // Convert from Sunday=0 to Monday=0: Mon=0, Tue=1, ..., Sun=6
+    return day === 0 ? 6 : day - 1
   }
 
   const previousMonth = () => {
@@ -136,7 +138,7 @@ export function TeamCalendar() {
         <CardContent>
           <div className="grid grid-cols-7 gap-1">
             {/* Day headers */}
-            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
+            {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => (
               <div key={day} className="text-center text-xs font-semibold text-slate-600 py-2">
                 {day}
               </div>

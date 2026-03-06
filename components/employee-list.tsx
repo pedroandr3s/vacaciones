@@ -34,7 +34,7 @@ export function EmployeeList() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithBalance | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "activo" | "inactivo">("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "activo" | "inactivo">("activo")
   const [contractFilter, setContractFilter] = useState<"all" | "chile" | "contractor_extranjero">("all")
   const [sortBy, setSortBy] = useState<"disponibilidad" | "alfabetico" | "antiguedad">("alfabetico")
   const [deletingId, setDeletingId] = useState<string | null>(null)
