@@ -13,7 +13,7 @@ Sistema de gestión de vacaciones para empresas, desarrollado con Next.js y Fire
 - **React Hook Form + Zod** - Formularios y validación
 - **Recharts** - Gráficos y reportes
 - **date-fns** - Manejo de fechas
-- **Vercel** - Hosting y despliegue
+- **Node.js / Docker** - Despliegue en servidor
 
 ## Funcionalidades
 
@@ -131,14 +131,187 @@ Este script crea un usuario en Firebase Auth y su documento correspondiente en F
 └── public/                 # Archivos estáticos
 ```
 
-## Despliegue en Vercel
+## Despliegue en producción
 
-El proyecto está configurado para desplegarse directamente en Vercel:
+### Opción 1: VPS con Node.js + PM2
 
-1. Conectar el repositorio en [vercel.com](https://vercel.com)
-2. Configurar las variables de entorno en el dashboard de Vercel
-3. Vercel detecta automáticamente que es un proyecto Next.js y ejecuta `npm run build`
-4. Cada push a la rama `main` genera un despliegue automático
+Ideal para servidores Linux (Ubuntu, Debian, CentOS, etc.) en proveedores como DigitalOcean, AWS EC2, Linode, Hetzner, etc.
+
+**1. Requisitos en el servidor**
+
+```bash
+# Instalar Node.js 18+ (usando nvm)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+source ~/.bashrc
+nvm install 20
+nvm use 20
+
+# Instalar PM2 globalmente
+npm install -g pm2
+```
+
+**2. Clonar y configurar**
+
+```bash
+git clone https://bitbucket.org/naitusspa/timhub-vacaciones.git
+cd timhub-vacaciones
+
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env.local
+nano .env.local  # Completar con las credenciales
+```
+
+**3. Build y arranque**
+
+```bash
+npm run build
+pm2 start npm --name "timhub-vacaciones" -- start
+```
+
+**4. Configurar PM2 para que inicie con el sistema**
+
+```bash
+pm2 startup
+pm2 save
+```
+
+**5. Configurar Nginx como reverse proxy (recomendado)**
+
+```nginx
+server {
+    listen 80;
+    server_name tu-dominio.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+**6. SSL con Certbot (HTTPS)**
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d tu-dominio.com
+```
+
+**Comandos útiles de PM2:**
+
+```bash
+pm2 status                    # Ver estado de la app
+pm2 logs timhub-vacaciones    # Ver logs en tiempo real
+pm2 restart timhub-vacaciones # Reiniciar la app
+pm2 stop timhub-vacaciones    # Detener la app
+```
+
+**Actualizar la aplicación:**
+
+```bash
+cd timhub-vacaciones
+git pull
+npm install
+npm run build
+pm2 restart timhub-vacaciones
+```
+
+---
+
+### Opción 2: Docker
+
+Ideal para entornos con Docker instalado o para orquestadores como Docker Compose, Kubernetes, etc.
+
+**1. Crear el `Dockerfile`** en la raíz del proyecto:
+
+```dockerfile
+FROM node:20-alpine AS base
+
+# Instalar dependencias
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Build de la aplicación
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# Imagen de producción
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
+```
+
+**2. Crear el archivo `docker-compose.yml`:**
+
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    restart: unless-stopped
+```
+
+**3. Construir y ejecutar:**
+
+```bash
+# Con Docker Compose
+docker compose up -d --build
+
+# O directamente con Docker
+docker build -t timhub-vacaciones .
+docker run -d -p 3000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+```
+
+**4. Habilitar standalone output** en `next.config.mjs`:
+
+```js
+const nextConfig = {
+  output: 'standalone',
+  // ... resto de la configuración
+}
+```
+
+> **Nota:** La opción `standalone` es necesaria para que el Dockerfile funcione correctamente. Genera un servidor Node.js independiente que no requiere `node_modules` en producción.
+
+**Comandos útiles de Docker:**
+
+```bash
+docker compose logs -f        # Ver logs
+docker compose restart        # Reiniciar
+docker compose down           # Detener y eliminar contenedor
+docker compose up -d --build  # Reconstruir y levantar
+```
 
 ## Licencia
 
