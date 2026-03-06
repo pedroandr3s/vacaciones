@@ -15,6 +15,21 @@ Sistema de gestión de vacaciones para empresas, desarrollado con Next.js y Fire
 - **date-fns** - Manejo de fechas
 - **Node.js / Docker** - Despliegue en servidor
 
+## Arquitectura backend
+
+Este proyecto no cuenta con un backend tradicional. En su lugar utiliza servicios externos que cumplen ese rol:
+
+- **Firebase Authentication** - Manejo de usuarios, login y sesiones
+- **Cloud Firestore** - Base de datos NoSQL (empleados, balances, solicitudes, feriados, contratos)
+- **Firebase Admin SDK** - Operaciones privilegiadas del lado del servidor (crear/eliminar usuarios) ejecutadas desde las API Routes de Next.js (`app/api/`)
+- **n8n Cloud** (`naitus.app.n8n.cloud`) - Automatización de flujos de trabajo mediante webhooks:
+  - `/webhook/naitus` - Recibe datos de usuarios creados (incluye contraseñas provisorias)
+  - `/webhook/vacaciones-equipo` - Envía vacaciones aprobadas a Google Calendar
+  - `/webhook/eliminar-vacacion` - Elimina eventos de calendario al cancelar vacaciones
+  - `/webhook/anexo` - Manejo de anexos de contrato
+
+Las API Routes de Next.js actúan como proxy entre el frontend y estos servicios, sin necesidad de un servidor backend separado.
+
 ## Funcionalidades
 
 ### Empleados
@@ -228,9 +243,22 @@ pm2 restart timhub-vacaciones
 
 ### Opción 2: Docker
 
-Ideal para entornos con Docker instalado o para orquestadores como Docker Compose, Kubernetes, etc.
+Ideal para entornos con Docker instalado. Se puede usar Docker directamente o con Docker Compose.
 
-**1. Crear el `Dockerfile`** en la raíz del proyecto:
+#### Prerequisitos
+
+**1. Habilitar standalone output** en `next.config.mjs`:
+
+```js
+const nextConfig = {
+  output: 'standalone',
+  // ... resto de la configuración
+}
+```
+
+> **Nota:** La opción `standalone` es necesaria para que el Dockerfile funcione correctamente. Genera un servidor Node.js independiente que no requiere `node_modules` en producción.
+
+**2. Crear el `Dockerfile`** en la raíz del proyecto:
 
 ```dockerfile
 FROM node:20-alpine AS base
@@ -269,7 +297,52 @@ EXPOSE 3000
 CMD ["node", "server.js"]
 ```
 
-**2. Crear el archivo `docker-compose.yml`:**
+**3. Configurar variables de entorno:**
+
+Crear el archivo `.env.local` en la raíz del proyecto con las credenciales (ver sección [Variables de entorno](#variables-de-entorno)).
+
+---
+
+#### Opción 2A: Docker solo
+
+**Construir la imagen:**
+
+```bash
+docker build -t timhub-vacaciones .
+```
+
+**Ejecutar el contenedor:**
+
+```bash
+docker run -d -p 3000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+```
+
+**Comandos útiles:**
+
+```bash
+docker ps                                    # Ver contenedores activos
+docker logs -f timhub-vacaciones             # Ver logs en tiempo real
+docker restart timhub-vacaciones             # Reiniciar
+docker stop timhub-vacaciones                # Detener
+docker rm timhub-vacaciones                  # Eliminar contenedor
+```
+
+**Actualizar la aplicación:**
+
+```bash
+cd timhub-vacaciones
+git pull
+docker stop timhub-vacaciones
+docker rm timhub-vacaciones
+docker build -t timhub-vacaciones .
+docker run -d -p 3000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+```
+
+---
+
+#### Opción 2B: Docker Compose
+
+**1. Crear el archivo `docker-compose.yml`** en la raíz del proyecto:
 
 ```yaml
 services:
@@ -282,36 +355,66 @@ services:
     restart: unless-stopped
 ```
 
-**3. Construir y ejecutar:**
+**2. Construir y ejecutar:**
 
 ```bash
-# Con Docker Compose
 docker compose up -d --build
-
-# O directamente con Docker
-docker build -t timhub-vacaciones .
-docker run -d -p 3000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
 ```
 
-**4. Habilitar standalone output** en `next.config.mjs`:
-
-```js
-const nextConfig = {
-  output: 'standalone',
-  // ... resto de la configuración
-}
-```
-
-> **Nota:** La opción `standalone` es necesaria para que el Dockerfile funcione correctamente. Genera un servidor Node.js independiente que no requiere `node_modules` en producción.
-
-**Comandos útiles de Docker:**
+**Comandos útiles:**
 
 ```bash
-docker compose logs -f        # Ver logs
-docker compose restart        # Reiniciar
+docker compose ps             # Ver estado del contenedor
+docker compose logs -f        # Ver logs en tiempo real
+docker compose restart        # Reiniciar la app
 docker compose down           # Detener y eliminar contenedor
 docker compose up -d --build  # Reconstruir y levantar
 ```
+
+**Actualizar la aplicación:**
+
+```bash
+cd timhub-vacaciones
+git pull
+docker compose up -d --build
+```
+
+Docker Compose reconstruye la imagen con los cambios y reemplaza el contenedor automáticamente.
+
+---
+
+### Cambiar el puerto (si el 3000 está ocupado)
+
+Por defecto la aplicación se levanta en el puerto `3000`. Si ese puerto ya está en uso, puedes cambiarlo según la opción de despliegue:
+
+**VPS con PM2:**
+
+```bash
+PORT=4000 pm2 start npm --name "timhub-vacaciones" -- start
+```
+
+Y actualizar el `proxy_pass` en la configuración de Nginx:
+
+```nginx
+proxy_pass http://localhost:4000;
+```
+
+**Docker / Docker Compose:**
+
+Cambiar el mapeo de puertos en `docker-compose.yml`:
+
+```yaml
+ports:
+  - "4000:3000"   # puerto-host:puerto-contenedor
+```
+
+O con Docker directamente:
+
+```bash
+docker run -d -p 4000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+```
+
+La app seguirá corriendo internamente en el puerto 3000, pero será accesible desde el puerto 4000 del host.
 
 ## Licencia
 
