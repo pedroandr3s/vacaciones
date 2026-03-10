@@ -243,67 +243,57 @@ pm2 restart timhub-vacaciones
 
 ### Opción 2: Docker
 
-Ideal para entornos con Docker instalado. Se puede usar Docker directamente o con Docker Compose.
+Ideal para entornos con Docker instalado. El repositorio ya incluye los archivos `Dockerfile`, `docker-compose.yml` y `.dockerignore` listos para usar.
 
-#### Prerequisitos
+> **Nota:** `next.config.mjs` ya tiene configurado `output: 'standalone'`, necesario para que el build de Docker genere un servidor Node.js independiente sin `node_modules`.
 
-**1. Habilitar standalone output** en `next.config.mjs`:
+#### Requisitos en el servidor
 
-```js
-const nextConfig = {
-  output: 'standalone',
-  // ... resto de la configuración
-}
+- Docker >= 20
+- Docker Compose >= 2 (incluido en Docker Desktop o instalable por separado)
+
+#### Clonar y configurar
+
+```bash
+git clone https://bitbucket.org/naitusspa/timhub-vacaciones.git
+cd timhub-vacaciones
 ```
 
-> **Nota:** La opción `standalone` es necesaria para que el Dockerfile funcione correctamente. Genera un servidor Node.js independiente que no requiere `node_modules` en producción.
+Las variables de entorno de producción están en el archivo `.env` (incluido en el repositorio). Si necesitas sobreescribir algún valor, edítalo directamente:
 
-**2. Crear el `Dockerfile`** en la raíz del proyecto:
-
-```dockerfile
-FROM node:20-alpine AS base
-
-# Instalar dependencias
-FROM base AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Build de la aplicación
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
-
-# Imagen de producción
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV PORT=3000
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
-EXPOSE 3000
-
-CMD ["node", "server.js"]
+```bash
+nano .env
 ```
 
-**3. Configurar variables de entorno:**
+#### Opción 2A: Docker Compose (recomendado)
 
-Crear el archivo `.env.local` en la raíz del proyecto con las credenciales (ver sección [Variables de entorno](#variables-de-entorno)).
+```bash
+docker compose up -d --build
+```
+
+La app estará disponible en `http://localhost:3000`.
+
+**Comandos útiles:**
+
+```bash
+docker compose ps             # Ver estado del contenedor
+docker compose logs -f        # Ver logs en tiempo real
+docker compose restart        # Reiniciar la app
+docker compose down           # Detener y eliminar contenedor
+```
+
+**Actualizar la aplicación:**
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+Docker Compose reconstruye la imagen con los cambios y reemplaza el contenedor automáticamente.
 
 ---
 
-#### Opción 2A: Docker solo
+#### Opción 2B: Docker sin Compose
 
 **Construir la imagen:**
 
@@ -314,7 +304,7 @@ docker build -t timhub-vacaciones .
 **Ejecutar el contenedor:**
 
 ```bash
-docker run -d -p 3000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+docker run -d -p 3000:3000 --env-file .env --name timhub-vacaciones timhub-vacaciones
 ```
 
 **Comandos útiles:**
@@ -330,91 +320,101 @@ docker rm timhub-vacaciones                  # Eliminar contenedor
 **Actualizar la aplicación:**
 
 ```bash
-cd timhub-vacaciones
 git pull
-docker stop timhub-vacaciones
-docker rm timhub-vacaciones
+docker stop timhub-vacaciones && docker rm timhub-vacaciones
 docker build -t timhub-vacaciones .
-docker run -d -p 3000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+docker run -d -p 3000:3000 --env-file .env --name timhub-vacaciones timhub-vacaciones
 ```
 
 ---
 
-#### Opción 2B: Docker Compose
+### Cambiar el puerto (si el 3000 está ocupado)
 
-**1. Crear el archivo `docker-compose.yml`** en la raíz del proyecto:
+Por defecto la aplicación se levanta en el puerto `3000`. Si necesitas usar otro puerto (por ejemplo `4000`), sigue los pasos según tu opción de despliegue:
+
+#### VPS con PM2
+
+**1.** Iniciar la app con el nuevo puerto:
+
+```bash
+PORT=4000 pm2 start npm --name "timhub-vacaciones" -- start
+```
+
+**2.** Actualizar el `proxy_pass` en la configuración de Nginx (`/etc/nginx/sites-available/tu-dominio.com`):
+
+```nginx
+proxy_pass http://localhost:4000;
+```
+
+**3.** Recargar Nginx para aplicar el cambio:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+#### Docker Compose
+
+**1.** Editar `docker-compose.yml` y cambiar el mapeo de puertos:
 
 ```yaml
 services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "4000:3000"   # puerto-host:puerto-contenedor
     env_file:
-      - .env.local
+      - .env
     restart: unless-stopped
 ```
 
-**2. Construir y ejecutar:**
+> El primer número (`4000`) es el puerto del servidor donde se accede a la app. El segundo (`3000`) es el puerto interno del contenedor y no debe cambiarse.
+
+**2.** Reconstruir y levantar:
 
 ```bash
+docker compose down
 docker compose up -d --build
 ```
 
-**Comandos útiles:**
+La app estará disponible en `http://localhost:4000`.
+
+#### Docker sin Compose
+
+Pasar el puerto deseado con `-p`:
 
 ```bash
-docker compose ps             # Ver estado del contenedor
-docker compose logs -f        # Ver logs en tiempo real
-docker compose restart        # Reiniciar la app
-docker compose down           # Detener y eliminar contenedor
-docker compose up -d --build  # Reconstruir y levantar
+docker run -d -p 4000:3000 --env-file .env --name timhub-vacaciones timhub-vacaciones
 ```
 
-**Actualizar la aplicación:**
+#### Configurar Nginx como reverse proxy (recomendado para ambas opciones Docker)
 
-```bash
-cd timhub-vacaciones
-git pull
-docker compose up -d --build
-```
-
-Docker Compose reconstruye la imagen con los cambios y reemplaza el contenedor automáticamente.
-
----
-
-### Cambiar el puerto (si el 3000 está ocupado)
-
-Por defecto la aplicación se levanta en el puerto `3000`. Si ese puerto ya está en uso, puedes cambiarlo según la opción de despliegue:
-
-**VPS con PM2:**
-
-```bash
-PORT=4000 pm2 start npm --name "timhub-vacaciones" -- start
-```
-
-Y actualizar el `proxy_pass` en la configuración de Nginx:
+Si usas Docker en un servidor con dominio, configura Nginx para redirigir al puerto que elegiste:
 
 ```nginx
-proxy_pass http://localhost:4000;
+server {
+    listen 80;
+    server_name tu-dominio.com;
+
+    location / {
+        proxy_pass http://localhost:4000;  # Debe coincidir con el puerto del host
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
 ```
 
-**Docker / Docker Compose:**
-
-Cambiar el mapeo de puertos en `docker-compose.yml`:
-
-```yaml
-ports:
-  - "4000:3000"   # puerto-host:puerto-contenedor
-```
-
-O con Docker directamente:
+Luego habilitar el sitio y recargar Nginx:
 
 ```bash
-docker run -d -p 4000:3000 --env-file .env.local --name timhub-vacaciones timhub-vacaciones
+sudo ln -s /etc/nginx/sites-available/tu-dominio.com /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
 ```
-
-La app seguirá corriendo internamente en el puerto 3000, pero será accesible desde el puerto 4000 del host.
 
 ## Licencia
 
